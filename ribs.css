@@ -1,0 +1,159 @@
+.ribs {
+    font-family: helvetica, arial, sans-serif;
+    background: #eee;
+    padding: 20px;
+    border: 1px dotted #ccc;
+    width: 400px
+}
+.ribs h1 {
+    font-size: 16pt;
+    display: inline-block;
+    margin: 0 10px 0 0;
+    text-transform: capitalize;
+    font-variant: small-caps;
+}
+.ribs.focussed {
+    border: 1px solid #bdf;
+}
+.ribs.minimized .list {
+    height: 2px;
+    overflow: hidden;
+    border: 1px solid gray;
+}
+.ribs ul { 
+    padding: 0;
+    margin: 0;
+}
+.ribs li {
+    list-style-type: none;
+    background: #ddd;
+    cursor: pointer;
+    outline: none;
+}
+.ribs .actions {
+    margin-bottom: 5px;
+    display: inline-block;
+}
+.ribs .button strong {
+    font-weight: normal;
+}
+.ribs.focussed .button strong {
+    font-weight: bold;
+}
+.ribs .action {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+
+.ribs .button {
+    border-radius: 4px;
+    background: white;
+    border: 1px solid gray;
+    padding: 2px 6px;
+}
+
+.ribs .button:focus {
+    background: steelblue;
+    color: white;
+    outline: none;
+}
+
+.ribs .disabled .button, .ribs .disabled .button:focus {
+    color: #ccc;
+    background: white;
+    cursor: default;
+}
+.ribs .list .button {
+    font-size: 80%;
+    padding: 1px 3px;
+    margin: 2px;
+}
+.ribs .list {
+    border: 1px solid gray;
+    border-bottom: 0 none;
+}
+.ribs .item > div, .ribs .header > div {
+    padding: 2px 6px;
+    display: inline-block;
+}
+.ribs .item {
+    overflow: hidden;
+    border-top: 1px solid white;
+    border-bottom: 1px solid #888;
+}
+.ribs .item:active {
+    background: #bbb;
+}
+.ribs .item.selected:active {
+    background: #cde;
+}
+.ribs .item:focus {
+    border-left: 4px solid steelblue;
+}
+.ribs .item:focus > :first-child {
+    padding-left: 2px;
+}
+.ribs .item.selected {
+    background: #def;
+}
+.ribs .header {
+    border: 1px solid gray;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: 0 none;
+    background: #ccc;
+}
+.ribs .footer {
+    padding: 2px 6px;
+    text-align: right;
+    background: #ccc;
+    border: 1px solid gray;
+    border-top: 0 none;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    font-size: 80%;
+}
+.ribs-hotkeys-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -200px;
+    margin-left: -300px;
+    height: 400px;
+    width: 600px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid white;
+    border-radius: 10px;
+    -webkit-box-shadow: 0 0 40px 2px #000;
+    box-shadow: 0 0 40px 2px #000;
+    text-shadow: 0px 0px 3px #000;
+    overflow: auto;
+    padding: 20px;
+    color: white;
+    font-family: Helvetica, Arial, sans-serif;
+}
+.ribs-hotkeys-overlay .key {
+    display: inline-block;
+    width: 30px;
+}
+.ribs-hotkeys-overlay .jump:first-letter {
+    color: #ccc;
+}
+.ribs-hotkeys-overlay h1 {
+    margin: 0 0 10px;
+    font-size: 16pt;
+    text-transform: capitalize;
+    font-variant: small-caps;
+}
+.ribs-hotkeys-overlay ul {
+    overflow: hidden;
+    padding: 0;
+}
+.ribs-hotkeys-overlay li {
+    list-style-type: none;
+    float: left;
+    width: 250px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+}
