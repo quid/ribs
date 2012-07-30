@@ -33,7 +33,3 @@ Depenencies
 + [backbone.js](http://backbonejs.org)
 + [laconic.js](http://joestelmach.github.com/laconic)
 
-
-Example
--------
-
