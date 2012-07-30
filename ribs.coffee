@@ -1,21 +1,19 @@
-# Ribs.coffee
-
 do ($=jQuery) ->
 
-    # make Ribs globally accessible
+    # Make `Ribs` globally accessible.
     window.Ribs = {}
-
-    # internal dispatcher for model/collection synchronization
-    Ribs.dispatcher = _.extend {}, Backbone.Events
 
     # Jump keys
     # ---------
     
+    # Internal list for registered jump keys.
     Ribs._boundJumpKeys = {}
+    # Hotkey to preceed any jump keys.
     Ribs._jumpPrefixKey = "g"
+    # Time allowed between prefix and jump key.
     Ribs._jumpTimeout = 1000
 
-    # will set _readyToJump flag for _jumpTimeout milliseconds
+    # Sets `_readyToJump` flag for `_jumpTimeout` milliseconds.
     Ribs._poiseJump = ->
         Ribs._readyToJump = true
         clearTimeout(Ribs._jumpInterval)
@@ -23,23 +21,25 @@ do ($=jQuery) ->
             Ribs._readyToJump = false
         , Ribs._jumpTimeout)
 
+    # Executes applicable jump key.
     Ribs._makeJump = (charcode) ->
         Ribs._readyToJump = false
         clearTimeout Ribs._jumpTimeout
         bindings = Ribs._boundJumpKeys[charcode]
         if bindings? and bindings.length > 0
             _.each bindings, (binding) ->
-                # only jump if list is visible
+                # Only jump if `el` is visible
                 unless binding.el? and $(binding.el).is(":hidden")
                     binding.fn.apply(binding.ctx)
 
-    # function to use when adding a jump key
-    # label:    shown in the keyboard bindings pane
-    # key:      the jump key to use
-    # fn:       the callback for when jumpkey combo is hit
-    # ctx:      context of the jumpkey callback (`this` within fn)
-    # el:       the element (defaults to ctx.el). must be visible for jumpkey to
-    #           be active
+    # The function to use when adding a jump key.
+    #
+    # + __label__:    Shown in the keyboard bindings pane.
+    # + __key__:      The jump key to use.
+    # + __fn__:       The callback for when jumpkey combo is hit.
+    # + __ctx__:      Context of the jumpkey callback (`this` within fn).
+    # + __el__:       The element (defaults to ctx.el). Must be visible on page
+    #                 for jumpkey to be active.
     Ribs.bindJumpKey = (label, key, fn, ctx, el) ->
         charCode = key.charCodeAt(0)
         if not el? and ctx instanceof Backbone.View
@@ -53,7 +53,7 @@ do ($=jQuery) ->
             key: key
         charCode
 
-    # function to use when removing a jump key
+    # The function to use when removing a jump key.
     Ribs.unbindJumpKey = (key, ctx) ->
         charCode = key.charCodeAt(0)
         _.each Ribs._boundJumpKeys[charCode], (binding, i)->
@@ -63,25 +63,26 @@ do ($=jQuery) ->
                     delete Ribs._boundJumpKeys[charCode]
 
 
-    # a registry for all views is required when showing hotkey help pane
+    # A registry for all views is required when showing hotkey help pane.
     Ribs._registeredListViews = {}
 
-    # function which will construct/display applicable hotkeys in a help pane
+    # Function which will construct/display applicable keyboard shortcuts 
+    # in an overlay.
     Ribs.showKeyboardBindings = ->
 
-        className = "ribs-hotkeys-overlay"
+        className = "ribs-keyboard-shortcuts-overlay"
 
-        # remove any existing overlays if they exist
+        # Remove any existing overlays if they exist.
         $(".#{className}").remove()
 
-        # create overlay div
+        # Create overlay div.
         overlay = $.el.div(class: className)
 
-        # first section has generic hotkeys and jump keys
+        # First section has generic hotkeys and jump keys.
         ul = $.el.ul()
         $(overlay).append $.el.h1("Navigation"), ul
 
-        # all jump keys
+        # Loop through and add all jump keys.
         _.each _.flatten(Ribs._boundJumpKeys), (binding) ->
             unless binding.el and $(binding.el).is(":hidden")
                 li = $.el.li(
@@ -91,7 +92,7 @@ do ($=jQuery) ->
                 )
                 $(ul).append li
 
-        # Generic ribs hotkeys
+        # Generic ribs hotkeys.
         keys = [
             { key: "?", label: "Open this page" },
             { key: "j", label: "Next item" },
@@ -113,7 +114,7 @@ do ($=jQuery) ->
             $(ul).append li
 
 
-        # a new section for each registered list with all of its actions
+        # A new section for each registered list with all of its actions.
         _.each Ribs._registeredListViews, (view) ->
             unless $(view.el).is(":hidden")
                 h1 = $.el.h1 view.plural()
@@ -128,12 +129,12 @@ do ($=jQuery) ->
                         )
                         $(ul).append li
 
-        # double clicking overlay will remove it
-        $(overlay).bind 'dblclick', ->
+        # Clicking overlay will remove it.
+        $(overlay).bind 'click', ->
             $(overlay).remove()
             false
 
-        # <return> or <esc> will remove overlay
+        # __<return>__ or __<esc>__ will remove overlay.
         $(window).bind 'keyup', (event) -> 
             $(overlay).remove() if event.which in [13, 27]
             false
@@ -141,7 +142,8 @@ do ($=jQuery) ->
         $("body").append(overlay)
         overlay
 
-    # main jumpkey handler
+    # Main jumpkey handler.
+    # TODO: wrap this in an optionally called `enableKeyboardShortcuts` method.
     $(window).on "keypress", (event) ->
         unless $(":focus").is("input:text, textarea")
             prefix = Ribs._jumpPrefixKey.charCodeAt(0)
@@ -157,7 +159,7 @@ do ($=jQuery) ->
     # Views
     # -----
 
-    # view for a list item in a regular Ribs.List
+    # View for a list item in a regular `Ribs.List`.
     class Ribs.ListItem extends Backbone.View
 
         tagName: "li"
@@ -218,7 +220,7 @@ do ($=jQuery) ->
                 
                 @$el.append $.el.div(class: klass, value)
 
-            # add inline actions
+            # Add inline actions.
             _.each @view.inlineActions, (action, key) =>
                 @$el.append action.renderInline(this)
 
@@ -255,7 +257,7 @@ do ($=jQuery) ->
             @model.trigger "disabled"
 
         keypressed : (event) -> 
-            # return and x will toggle selection
+            # __<return>__ and __x__ will toggle selection.
             if event.which in [13, 120]
                 @toggle()
             else if @view.inlineActions.length
@@ -265,7 +267,7 @@ do ($=jQuery) ->
             @$el.focus()
 
 
-    # primary Ribs component
+    # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View
   
         itemView: Ribs.ListItem
@@ -307,7 +309,7 @@ do ($=jQuery) ->
             
             super options
 
-            # construct internal components
+            # Construct internal components.
             @initializeTitle()
             @initializeActions()
             @initializeHeader()
@@ -316,13 +318,13 @@ do ($=jQuery) ->
 
             @addAllItems()
 
-            # bind jump key
+            # Bind jump key.
             if @jumpkey?
                 Ribs.bindJumpKey @plural(), @jumpkey, ->
                     @$el.find(@jumpSelector).focus()
                 , this
 
-            # bind events to collection
+            # Bind events to collection.
             @collection.on "add", @addItem, this
             @collection.on "reset", @addAllItems, this
             @collection.on "selected deselected reset add remove", @updateHeader, this
@@ -364,10 +366,9 @@ do ($=jQuery) ->
         toggleVisibility : ->
             @$header.find(".maximize, .minimize").toggle()
 
-            # workaround for bug http://bugs.jqueryui.com/ticket/8113
+            # Workaround for bug http://bugs.jqueryui.com/ticket/8113
             @$el.attr("class", "") unless @$el.attr("class")?
 
-            # end workaround
             @$el.toggleClass "minimized", 100
 
         sortBy : (field, old_field) ->
@@ -377,13 +378,13 @@ do ($=jQuery) ->
 
             @collection.trigger('sorted', field, dir)
             
-            # remove arrows from previously sorted label
+            # Remove arrows from previously sorted label.
             if old_field?
                 old_el = @$header.find("[data-sort-by='#{old_field}']")
                 old_label = old_el.html()?.replace(re, "")
                 $(old_el).html(old_label)
             
-            # put arrows on currently sorted label
+            # Put arrows on currently sorted label.
             el = @$header.find("[data-sort-by='#{field}']")
             label = $(el).html()?.replace(re, " #{@sortArrows[dir]}")
             $(el).html(label)
