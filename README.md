@@ -12,10 +12,10 @@ Documentation
 -------------
 
 Unfortunately we haven't written a tonne of official documentation yet.
-However you can feel free to look at the [annotated source](ribs.coffee.html).
+However you can feel free to look at the [annotated source](http://quid.github.com/ribs/ribs.coffee.html).
 
 Another good way to learn how to use Ribs is to look at the 
-[annotated source of our demo application](demo/todos.js.html) 
+[annotated source of our demo application](http://quid.github.com/ribs/demo/todos.js.html) 
 (yet another Todo manager).
 
 You can see the [application in action here](http://quid.github.com/ribs/demo).
