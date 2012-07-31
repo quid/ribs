@@ -8,11 +8,14 @@ according to a large number of people,
 The meat and bones of Ribs is the `Ribs.List` - an extended Backbone view which 
 renders a given collection and set of actions. 
 
-Demo Application
-----------------
+Documentation
+-------------
 
-The fastest way to learn how to use Ribs is to look at the 
-[annotated source of our demo application](http://quid.github.com/ribs/demo/todos.js.html) 
+Unfortunately we haven't written a tonne of official documentation yet.
+However you can feel free to look at the [annotated source](ribs.coffee.html).
+
+Another good way to learn how to use Ribs is to look at the 
+[annotated source of our demo application](demo/todos.js.html) 
 (yet another Todo manager).
 
 You can see the [application in action here](http://quid.github.com/ribs/demo).
@@ -25,12 +28,12 @@ Depenencies
 + [backbone.js](http://backbonejs.org)
 + [laconic.js](http://joestelmach.github.com/laconic)
 
-Documentation
--------------
+Downloads
+---------
 
-Unfortunately we haven't written a tonne of official documentation yet.
-However you can feel free to look at the [annotated
-source](http://quid.github.com/ribs/ribs.coffee.html).
++ [Ribs in CoffeeScript](http://quid.github.com/ribs/ribs.coffee)
++ [Ribs compiled to JavaScript](http://quid.github.com/ribs/ribs.js)
++ [Ribs compiled to JavaScript and uglified](http://quid.github.com/ribs/ribs.min.js)
 
 
 Keyboard Utilities
