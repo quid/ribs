@@ -10,15 +10,38 @@
         <script type="text/javascript" src="http://backbonejs.org/backbone.js"></script>
         <script type="text/javascript" src="../ribs.min.js"></script>
         <script type="text/javascript" src="todos.js"></script>
-        <link rel="stylesheet" href="ribs.css" />
+        <link rel="stylesheet" href="../ribs.css" />
         <style type="text/css">
+
             /* A few extra styles to make things look better */
+            body {
+                text-align: center;
+                padding: 50px 0 0;
+            }
+            body > p {
+                text-align: left;
+                font-family: verdana, arial, sans-serif;
+            }
+            body > p > span, body > p > a {
+                color: #555;
+                text-decoration: none;
+            }
+            body > p > a:hover {
+                text-decoration: underline;
+            }
+            .ribs, p {
+                display: inline-block;
+                width: 600px;
+            }
 
             /* Fix the width of name column */
             .ribs .name {
-                width: 332px;
+                width: 515px;
             }
 
+            .ribs .item.done {
+                color: #666;
+            }
             /* Completed items have a line through em */
             .ribs .item.done .name {
                 text-decoration: line-through;
@@ -39,9 +62,14 @@
             .ribs .item.done .button {
                 display: none;
             }
+
         </style>
     </head>
     <body>
-        <h1>Ribs demo</h1>
+        <br>
+        <p>Press <span>?</span> or <a href="#showKeyboardBindings">click here</a> to show keyboard shortcuts.</p>
+        <br>
+        <p><a href="http://quid.github.com/ribs/demo/todos.js.html">
+            See the annotated source code.</a></p>
     </body>
 </html>

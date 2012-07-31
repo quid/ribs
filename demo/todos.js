@@ -19,7 +19,7 @@
             // This set of attributes determines what are shown as columns.
             displayAttributes: [
                 {
-                    label: "todo",
+                    label: "",
                     field: "name"
                 },
                 { 
@@ -98,7 +98,6 @@
                 },
                 {
                     label: "Clear selected",
-                    batchLabel: "Clear",
                     hotkey: "C",
                     activate: function(selected) {
                         c = this.collection;
@@ -126,7 +125,11 @@
         todos_view.render();
 
         // Add the Ribs list to the DOM.
-        $("body").append(todos_view.el);
+        $("body").prepend(todos_view.el);
+        $("a[href=#showKeyboardBindings]").click(function() {
+            Ribs.showKeyboardBindings();
+            return false;
+        });
         
     });
 

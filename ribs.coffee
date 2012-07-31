@@ -136,7 +136,7 @@ do ($=jQuery) ->
 
         # __<return>__ or __<esc>__ will remove overlay.
         $(window).bind 'keyup', (event) -> 
-            $(overlay).remove() if event.which in [13, 27]
+            $(overlay).remove() if event.which is 27
             false
 
         $("body").append(overlay)
@@ -562,80 +562,7 @@ do ($=jQuery) ->
             word = if plural then @plural() else @itemName
             @$footer.text "#{@getNumSelected()} / #{@getNumTotal()} #{word} selected"
     
-  
-    class Ribs.DropDownItem extends Backbone.View
-  
-        tagName: "option"
-        labelField : "name"
-        valueField : "id"
-        attributes: -> { value: @model.get @valueField }
 
-        constructor : (options) ->
-            super options
-            @model.on 'change', @render, this
-            @model.on 'remove', @remove, this
-
-        render : ->
-            @$el.text(@model.get(@labelField))
-            @$el.data("cid", @model.cid)
-            @$el
-
-        enable : ->
-            @$el.removeAttr "disabled"
-
-        disable :-> 
-            @$el.attr "disabled", "disabled"
-
-        select : ->
-            @$el.attr "selected", "selected"
-
-        deselect : ->
-            @$el.removeAttr "selected"
-
-
-    class Ribs.DropDown extends Backbone.View
-  
-        tagName: "select"
-    
-        _ribsEvents: 
-            'change' : 'change'
-    
-        constructor : (options) ->
-      
-            @events ||= {}
-            _.extend @events, @_ribsEvents
-      
-            super options
-      
-            @jumpkey = @jumpkey ? options.jumpkey
-            if @jumpkey?
-                Ribs.bindJumpKey "dropdown", @jumpkey, ->
-                    @$el.focus()
-                , this, @$el
-      
-            @collection.on "add", @addOne, this
-            @collection.on "reset", @addAll, this
-
-            @addAll()
-    
-        addAll : ->
-            @$el.empty()
-            @collection.each @addOne, this
-            @collection.first().trigger "selected" if @collection.first()
-            @$el.trigger "reload"
-    
-        addOne : (model_instance) ->
-            view = new Ribs.DropDownItem( model: model_instance )
-            view.render()
-            @$el.append(view.el)
-      
-        change : (event) ->
-            cid = @$el.find(":selected").data("cid")
-            model = @collection.getByCid(cid)
-            model.trigger "selected"
-            true
-    
-    
     class Ribs.Action extends Backbone.View
   
         tagName : "li"

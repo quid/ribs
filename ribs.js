@@ -5,7 +5,6 @@
   (function($) {
     var walk_context;
     window.Ribs = {};
-    Ribs.dispatcher = _.extend({}, Backbone.Events);
     Ribs._boundJumpKeys = {};
     Ribs._jumpPrefixKey = "g";
     Ribs._jumpTimeout = 1000;
@@ -60,7 +59,7 @@
     Ribs._registeredListViews = {};
     Ribs.showKeyboardBindings = function() {
       var className, keys, overlay, ul;
-      className = "ribs-hotkeys-overlay";
+      className = "ribs-keyboard-shortcuts-overlay";
       $("." + className).remove();
       overlay = $.el.div({
         "class": className
@@ -142,13 +141,12 @@
           });
         }
       });
-      $(overlay).bind('dblclick', function() {
+      $(overlay).bind('click', function() {
         $(overlay).remove();
         return false;
       });
       $(window).bind('keyup', function(event) {
-        var _ref;
-        if ((_ref = event.which) === 13 || _ref === 27) {
+        if (event.which === 27) {
           $(overlay).remove();
         }
         return false;
@@ -666,108 +664,6 @@
       };
 
       return List;
-
-    })(Backbone.View);
-    Ribs.DropDownItem = (function(_super) {
-
-      __extends(DropDownItem, _super);
-
-      DropDownItem.prototype.tagName = "option";
-
-      DropDownItem.prototype.labelField = "name";
-
-      DropDownItem.prototype.valueField = "id";
-
-      DropDownItem.prototype.attributes = function() {
-        return {
-          value: this.model.get(this.valueField)
-        };
-      };
-
-      function DropDownItem(options) {
-        DropDownItem.__super__.constructor.call(this, options);
-        this.model.on('change', this.render, this);
-        this.model.on('remove', this.remove, this);
-      }
-
-      DropDownItem.prototype.render = function() {
-        this.$el.text(this.model.get(this.labelField));
-        this.$el.data("cid", this.model.cid);
-        return this.$el;
-      };
-
-      DropDownItem.prototype.enable = function() {
-        return this.$el.removeAttr("disabled");
-      };
-
-      DropDownItem.prototype.disable = function() {
-        return this.$el.attr("disabled", "disabled");
-      };
-
-      DropDownItem.prototype.select = function() {
-        return this.$el.attr("selected", "selected");
-      };
-
-      DropDownItem.prototype.deselect = function() {
-        return this.$el.removeAttr("selected");
-      };
-
-      return DropDownItem;
-
-    })(Backbone.View);
-    Ribs.DropDown = (function(_super) {
-
-      __extends(DropDown, _super);
-
-      DropDown.prototype.tagName = "select";
-
-      DropDown.prototype._ribsEvents = {
-        'change': 'change'
-      };
-
-      function DropDown(options) {
-        var _ref;
-        this.events || (this.events = {});
-        _.extend(this.events, this._ribsEvents);
-        DropDown.__super__.constructor.call(this, options);
-        this.jumpkey = (_ref = this.jumpkey) != null ? _ref : options.jumpkey;
-        if (this.jumpkey != null) {
-          Ribs.bindJumpKey("dropdown", this.jumpkey, function() {
-            return this.$el.focus();
-          }, this, this.$el);
-        }
-        this.collection.on("add", this.addOne, this);
-        this.collection.on("reset", this.addAll, this);
-        this.addAll();
-      }
-
-      DropDown.prototype.addAll = function() {
-        this.$el.empty();
-        this.collection.each(this.addOne, this);
-        if (this.collection.first()) {
-          this.collection.first().trigger("selected");
-        }
-        return this.$el.trigger("reload");
-      };
-
-      DropDown.prototype.addOne = function(model_instance) {
-        var view;
-        view = new Ribs.DropDownItem({
-          model: model_instance
-        });
-        view.render();
-        return this.$el.append(view.el);
-      };
-
-      DropDown.prototype.change = function(event) {
-        var cid, model;
-        cid = this.$el.find(":selected").data("cid");
-        model = this.collection.getByCid(cid);
-        model.trigger("selected");
-        return true;
-      };
-
-      return DropDown;
 
     })(Backbone.View);
     Ribs.Action = (function(_super) {
