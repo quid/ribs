@@ -34,6 +34,7 @@ Downloads
 + [Ribs in CoffeeScript](http://quid.github.com/ribs/ribs.coffee)
 + [Ribs compiled to JavaScript](http://quid.github.com/ribs/ribs.js)
 + [Ribs compiled to JavaScript and uglified](http://quid.github.com/ribs/ribs.min.js)
++ [CSS which might make your widgets more palatable](http://quid.github.com/ribs/ribs.css)
 
 
 Keyboard Utilities
