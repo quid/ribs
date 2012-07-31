@@ -1,12 +1,36 @@
 Ribs
 ====
 
-Ribs can be used to make beautiful things, like
-functional collection widgets and, according to a large number of people, 
+Ribs can be used to make beautiful things, like functional list widgets and, 
+according to a large number of people, 
 [women](http://en.wikipedia.org/wiki/Eve#Creation).
 
 The meat and bones of Ribs is the `Ribs.List` - an extended Backbone view which 
 renders a given collection and set of actions. 
+
+Demo Application
+----------------
+
+The fastest way to learn how to use Ribs is to look at the 
+[annotated source of our demo application](http://quid.github.com/ribs/demo/todos.js.html) 
+(yet another Todo manager).
+
+You can see the [application in action here](http://quid.github.com/ribs/demo).
+
+Depenencies
+-----------
+
++ [jquery.js](http://jquery.com)
++ [underscore.js](http://underscorejs.org)
++ [backbone.js](http://backbonejs.org)
++ [laconic.js](http://joestelmach.github.com/laconic)
+
+Documentation
+-------------
+
+Unfortunately we haven't written a tonne of official documentation yet.
+However you can feel free to look at the [annotated
+source](http://quid.github.com/ribs/ribs.coffee.html).
 
 
 Keyboard Utilities
@@ -24,12 +48,9 @@ selected items in the focussed Ribs list.
 Both Jumpkeys and Hotkeys can be discovered by the user by hitting the global 
 hotkey `?`. Calling `Ribs.showKeyboardBindings()` will do the same.
 
+Work in Progress
+----------------
 
-Depenencies
------------
-
-+ [jquery.js](http://jquery.com)
-+ [underscore.js](http://underscorejs.org)
-+ [backbone.js](http://backbonejs.org)
-+ [laconic.js](http://joestelmach.github.com/laconic)
-
+Ribs is a work in progress. It seems to work well in the lastest Chrome, Firefox
+and Safari. Please let us know if something is wrong by [filing an issue on
+GitHub](https://github.com/quid/ribs/issues).
