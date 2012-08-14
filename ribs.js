@@ -203,16 +203,18 @@
           _this = this;
         this.$el.empty();
         this.$el.data("cid", this.model.cid);
-        toggle = $.el.input({
-          type: "checkbox",
-          tabindex: -1
-        });
-        if (this.$el.is(".selected")) {
-          $(toggle).attr("checked", true);
+        if (!this.view.suppressToggle) {
+          toggle = $.el.input({
+            type: "checkbox",
+            tabindex: -1
+          });
+          if (this.$el.is(".selected")) {
+            $(toggle).attr("checked", true);
+          }
+          this.$el.append($.el.div({
+            "class": "toggle"
+          }, toggle));
         }
-        this.$el.append($.el.div({
-          "class": "toggle"
-        }, toggle));
         obj = this.model.toJSON();
         attributes = (_ref = this.view.displayAttributes) != null ? _ref : _.map(obj, function(v, k) {
           return {
@@ -309,8 +311,6 @@
 
       List.prototype.tagName = "div";
 
-      List.prototype.className = "ribs";
-
       List.prototype.itemName = "item";
 
       List.prototype._ribsEvents = {
@@ -330,33 +330,49 @@
         return e.preventDefault();
       };
 
+      List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
+
       function List(options) {
-        var key;
+        var key,
+          _this = this;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
+        this.className || (this.className = "");
+        this.className += " ribs";
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
         _.extend(this, options);
         key = _.uniqueId('ribs_view_');
         Ribs._registeredListViews[key] = this;
         List.__super__.constructor.call(this, options);
-        this.initializeTitle();
-        this.initializeActions();
-        this.initializeHeader();
-        this.initializeList();
-        this.initializeFooter();
-        this.addAllItems();
+        _.each(this.renderOrder, function(t) {
+          if (!_this["suppress" + t]) {
+            return _this["initialize" + t]();
+          }
+        });
         if (this.jumpkey != null) {
           Ribs.bindJumpKey(this.plural(), this.jumpkey, function() {
             return this.$el.find(this.jumpSelector).focus();
           }, this);
         }
+        if (this.collection != null) {
+          this.setCollection(this.collection);
+        }
+      }
+
+      List.prototype.setCollection = function(collection) {
+        this.collection = collection;
         this.collection.on("add", this.addItem, this);
         this.collection.on("reset", this.addAllItems, this);
-        this.collection.on("selected deselected reset add remove", this.updateHeader, this);
-        this.collection.on("selected deselected reset add remove", this.updateFooter, this);
-      }
+        if (this.$header) {
+          this.collection.on("selected deselected reset add remove", this.updateHeader, this);
+        }
+        if (this.$footer) {
+          this.collection.on("selected deselected reset add remove", this.updateFooter, this);
+        }
+        return this.addAllItems();
+      };
 
       List.prototype.getSelected = function() {
         var selected,
@@ -468,9 +484,9 @@
         var _this = this;
         if (!(Ribs._readyToJump || $(":focus").is("input:text, textarea"))) {
           if (event.which === 106) {
-            return $(":focus").nextAll(".item:not(.disabled):first").focus();
+            return $(":focus").nextAll(".item:visible:not(.disabled):first").focus();
           } else if (event.which === 107) {
-            return $(":focus").prevAll(".item:not(.disabled):first").focus();
+            return $(":focus").prevAll(".item:visible:not(.disabled):first").focus();
           } else if (event.which === 74) {
             return this.$list.find(".item:last").focus();
           } else if (event.which === 75) {
@@ -522,23 +538,20 @@
 
       List.prototype.initializeTitle = function() {
         var title, _ref;
-        if (this.suppressTitle == null) {
-          title = (_ref = this.title) != null ? _ref : this.plural();
-          this.$title = $($.el.h1({
-            "class": "title"
-          }, title));
-          return this.$el.append(this.$title);
-        }
+        title = (_ref = this.title) != null ? _ref : this.plural();
+        this.$title = $($.el.h1({
+          "class": "title"
+        }, title));
+        return this.$el.append(this.$title);
       };
 
       List.prototype.initializeActions = function() {
         var _this = this;
+        this.batchActions = [];
+        this.inlineActions = [];
         this.$batchActions = $($.el.ul({
           "class": "actions"
         }));
-        this.$el.append(this.$batchActions);
-        this.batchActions = [];
-        this.inlineActions = [];
         _.each(this.actions, function(actionConfig) {
           var action;
           actionConfig.collection = _this.collection;
@@ -553,7 +566,12 @@
             return _this.$batchActions.append(action.el);
           }
         });
-        return this.$batchActions;
+        if (this.batchActions.length) {
+          this.$el.append(this.$batchActions);
+          return this.$batchActions;
+        } else {
+          return null;
+        }
       };
 
       List.prototype.initializeList = function() {
@@ -589,16 +607,18 @@
           "class": "header"
         }));
         this.$el.append(this.$header);
-        toggle = $.el.input({
-          type: "checkbox",
-          tabindex: -1
-        });
-        if (this.selectedByDefault) {
-          $(toggle).attr("checked", "checked");
+        if (!this.suppressToggle) {
+          toggle = $.el.input({
+            type: "checkbox",
+            tabindex: -1
+          });
+          if (this.selectedByDefault) {
+            $(toggle).attr("checked", "checked");
+          }
+          this.$header.append($.el.div({
+            "class": "toggle"
+          }, toggle));
         }
-        this.$header.append($.el.div({
-          "class": "toggle"
-        }, toggle));
         if (this.displayAttributes != null) {
           attributes = this.displayAttributes;
         } else {
