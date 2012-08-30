@@ -326,7 +326,8 @@ do ($=jQuery) ->
 
         setCollection: (collection)->
             @collection = collection
-
+            _.each _.union(@inlineActions, @batchActions), (action) =>
+                action.setCollection @collection if action?
             # Bind events to collection.
             @collection.on "add", @addItem, this
             @collection.on "reset", @addAllItems, this
@@ -356,11 +357,11 @@ do ($=jQuery) ->
             if @selectedByDefault is true 
                 @$list.find(".item.selected").trigger "deselect", silent: true
                 @selectedByDefault = false
-                @collection.trigger "deselected"
+                @collection?.trigger "deselected"
             else
                 @$list.find(".item:not(.selected)").trigger "select", silent: true
                 @selectedByDefault = true
-                @collection.trigger "selected"
+                @collection?.trigger "selected"
 
         invertSelected : ->
             toSelect = @$list.find(":not(.item.selected)")
@@ -378,6 +379,8 @@ do ($=jQuery) ->
             @$el.toggleClass "minimized", 100
 
         sortBy : (field, old_field) ->
+
+            return unless @collection?
 
             re = new RegExp(" (#{_.values(@sortArrows).join("|")})$|$")
             dir = @collection.sortingDirection[field] ? 1
@@ -449,7 +452,7 @@ do ($=jQuery) ->
             unless @focussed
                 @focussed = true
             @$el.addClass "focussed"
-            @collection.trigger "focusin"
+            @collection?.trigger "focusin"
     
         focusout : (event) ->
             if @focussed
@@ -458,7 +461,7 @@ do ($=jQuery) ->
                     if @$el.find(document.activeElement).length is 0
                         @$el.removeClass "focussed"
                     @focussed = false
-                    @collection.trigger "focusout"
+                    @collection?.trigger "focusout"
                 , 10
         
         plural : ->
@@ -596,12 +599,15 @@ do ($=jQuery) ->
             
             super options
 
-            if @collection?
-                @collection.on "selected deselected reset", @checkRequirements, this
-                @view.on "keypressed", @keypressedOnView, this if @hotkey?
+            @setCollection @collection if @collection?
 
             @checkRequirements()
     
+        setCollection: (collection) ->
+            if collection?
+                @collection = collection
+                @collection.on "selected deselected reset", @checkRequirements, this
+                @view.on "keypressed", @keypressedOnView, this if @hotkey?
   
         checkRequirements: ->
             enable = @allowed()
