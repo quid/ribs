@@ -362,7 +362,13 @@
       }
 
       List.prototype.setCollection = function(collection) {
+        var _this = this;
         this.collection = collection;
+        _.each(_.union(this.inlineActions, this.batchActions), function(action) {
+          if (action != null) {
+            return action.setCollection(_this.collection);
+          }
+        });
         this.collection.on("add", this.addItem, this);
         this.collection.on("reset", this.addAllItems, this);
         if (this.$header) {
@@ -401,18 +407,19 @@
       };
 
       List.prototype.toggleSelected = function(event) {
+        var _ref, _ref1;
         if (this.selectedByDefault === true) {
           this.$list.find(".item.selected").trigger("deselect", {
             silent: true
           });
           this.selectedByDefault = false;
-          return this.collection.trigger("deselected");
+          return (_ref = this.collection) != null ? _ref.trigger("deselected") : void 0;
         } else {
           this.$list.find(".item:not(.selected)").trigger("select", {
             silent: true
           });
           this.selectedByDefault = true;
-          return this.collection.trigger("selected");
+          return (_ref1 = this.collection) != null ? _ref1.trigger("selected") : void 0;
         }
       };
 
@@ -434,6 +441,9 @@
 
       List.prototype.sortBy = function(field, old_field) {
         var dir, el, label, old_el, old_label, re, _ref, _ref1, _ref2;
+        if (this.collection == null) {
+          return;
+        }
         re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
         dir = (_ref = this.collection.sortingDirection[field]) != null ? _ref : 1;
         this.collection.trigger('sorted', field, dir);
@@ -511,22 +521,24 @@
       };
 
       List.prototype.focusin = function(event) {
+        var _ref;
         if (!this.focussed) {
           this.focussed = true;
         }
         this.$el.addClass("focussed");
-        return this.collection.trigger("focusin");
+        return (_ref = this.collection) != null ? _ref.trigger("focusin") : void 0;
       };
 
       List.prototype.focusout = function(event) {
         var _this = this;
         if (this.focussed) {
           return setTimeout(function() {
+            var _ref;
             if (_this.$el.find(document.activeElement).length === 0) {
               _this.$el.removeClass("focussed");
             }
             _this.focussed = false;
-            return _this.collection.trigger("focusout");
+            return (_ref = _this.collection) != null ? _ref.trigger("focusout") : void 0;
           }, 10);
         }
       };
@@ -709,13 +721,20 @@
         _.extend(this, options);
         Action.__super__.constructor.call(this, options);
         if (this.collection != null) {
-          this.collection.on("selected deselected reset", this.checkRequirements, this);
-          if (this.hotkey != null) {
-            this.view.on("keypressed", this.keypressedOnView, this);
-          }
+          this.setCollection(this.collection);
         }
         this.checkRequirements();
       }
+
+      Action.prototype.setCollection = function(collection) {
+        if (collection != null) {
+          this.collection = collection;
+          this.collection.on("selected deselected reset", this.checkRequirements, this);
+          if (this.hotkey != null) {
+            return this.view.on("keypressed", this.keypressedOnView, this);
+          }
+        }
+      };
 
       Action.prototype.checkRequirements = function() {
         var enable;
