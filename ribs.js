@@ -189,19 +189,32 @@
       };
 
       function ListItem(options) {
+        var _this = this;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
+        this.view = options != null ? options.view : void 0;
+        this.listItemCells = [];
+        _.each(this.view.displayAttributes, function(attribute) {
+          attribute = _.clone(attribute);
+          attribute.view = _this;
+          attribute.model = options.model;
+          return _this.listItemCells.push(new Ribs.ListItemCell(attribute));
+        });
         ListItem.__super__.constructor.call(this, options);
-        this.view = options.view;
-        this.model.on('change', this.render, this);
-        this.model.on('remove', this.remove, this);
-        this.model.on('stealfocus', this.stealfocus, this);
+        if (this.model != null) {
+          this.model.on('change', this.render, this);
+          this.model.on('remove', this.remove, this);
+          this.model.on('stealfocus', this.stealfocus, this);
+        }
       }
 
       ListItem.prototype.render = function() {
-        var attributes, obj, toggle, _ref,
+        var obj, toggle,
           _this = this;
         this.$el.empty();
+        if (!this.model) {
+          return;
+        }
         this.$el.data("cid", this.model.cid);
         if (!this.view.suppressToggle) {
           toggle = $.el.input({
@@ -215,30 +228,21 @@
             "class": "toggle"
           }, toggle));
         }
+        _.each(this.listItemCells, function(cell) {
+          cell.render();
+          cell.delegateEvents();
+          return _this.$el.append(cell.el);
+        });
         obj = this.model.toJSON();
-        attributes = (_ref = this.view.displayAttributes) != null ? _ref : _.map(obj, function(v, k) {
-          return {
-            field: k
-          };
-        });
-        _.each(attributes, function(attribute) {
-          var klass, value, _ref1;
-          klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
-          value = walk_context(attribute.field, obj);
-          if ("map" in attribute) {
-            value = attribute.map(value);
-          }
-          return _this.$el.append($.el.div({
-            "class": klass
-          }, value));
-        });
         return _.each(this.view.inlineActions, function(action, key) {
-          return _this.$el.append(action.renderInline(_this));
+          if (!((action.filter != null) && action.filter(_this.model) === false)) {
+            return _this.$el.append(action.renderInline(_this));
+          }
         });
       };
 
       ListItem.prototype.toggle = function() {
-        if (!this.$el.is(".disabled")) {
+        if (!(this.$el.is(".disabled") || this.view.suppressToggle)) {
           if (this.$el.is(".selected")) {
             return this.deselect();
           } else {
@@ -255,6 +259,9 @@
         if (options == null) {
           options = {};
         }
+        if (this.view.suppressToggle) {
+          return;
+        }
         this.$el.addClass("selected");
         this.$el.find("input:checkbox").attr("checked", "checked");
         if (!options.silent) {
@@ -265,6 +272,9 @@
       ListItem.prototype.deselect = function(event, options) {
         if (options == null) {
           options = {};
+        }
+        if (this.view.suppressToggle) {
+          return;
         }
         this.$el.removeClass("selected");
         this.$el.find("input:checkbox").removeAttr("checked");
@@ -289,9 +299,11 @@
 
       ListItem.prototype.keypressed = function(event) {
         var _ref;
-        if ((_ref = event.which) === 13 || _ref === 120) {
-          return this.toggle();
-        } else if (this.view.inlineActions.length) {
+        if (((_ref = event.which) === 13 || _ref === 120) && !this.view.suppressToggle) {
+          this.toggle();
+          return;
+        }
+        if (this.view.inlineActions.length) {
           return event.originalEvent.listItem = this;
         }
       };
@@ -301,6 +313,99 @@
       };
 
       return ListItem;
+
+    })(Backbone.View);
+    Ribs.ListItemCell = (function(_super) {
+
+      __extends(ListItemCell, _super);
+
+      ListItemCell.prototype.tagName = "div";
+
+      ListItemCell.prototype.className = "cell";
+
+      ListItemCell.prototype._ribsEvents = {
+        'click .edit': 'edit',
+        'blur .editableField': 'saveEditedField'
+      };
+
+      function ListItemCell(options) {
+        var _ref;
+        this.events || (this.events = {});
+        _.extend(this.events, this._ribsEvents);
+        _.extend(this, options);
+        ListItemCell.__super__.constructor.call(this, options);
+        this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
+        this.model.on("change change:" + this.field, this.render, this);
+      }
+
+      ListItemCell.prototype.renderableValue = function(nomap) {
+        var value;
+        value = this.model.get(this.field);
+        value || (value = walk_context(this.field, this.model.toJSON()));
+        if ("map" in this.options && !nomap) {
+          value = this.map(value, this.model, this.$el);
+        }
+        return value;
+      };
+
+      ListItemCell.prototype.render = function() {
+        var editableEl, _ref;
+        this.$el.empty();
+        if (this.escape) {
+          this.$el.text(this.renderableValue());
+        } else {
+          this.$el.html(this.renderableValue());
+        }
+        if (this.editable) {
+          editableEl = $.el.span({
+            "class": 'edit button inline'
+          }, '✎');
+          if ((_ref = this.model.get(this.field)) === null || _ref === '') {
+            $(editableEl).addClass('show');
+          } else {
+            $(editableEl).removeClass('show');
+          }
+          this.$el.append(editableEl);
+        }
+        return this;
+      };
+
+      ListItemCell.prototype.edit = function() {
+        var editField;
+        if (this.editable) {
+          if (this.editable instanceof Function) {
+            editField = $(this.editable(this.renderableValue(true), this.model));
+          } else {
+            editField = $($.el.input({
+              type: 'text',
+              value: this.renderableValue(true)
+            }));
+          }
+          editField.addClass("editableField");
+          this.$el.html(editField);
+          this.delegateEvents();
+          editField.focus();
+          this.model.editing = true;
+        }
+        return false;
+      };
+
+      ListItemCell.prototype.saveEditedField = function(e) {
+        var changeSet, field;
+        field = $(e.target);
+        changeSet = {};
+        changeSet[this.field] = field.val();
+        this.model.changeSet = changeSet;
+        this.model.save(changeSet, {
+          wait: true
+        });
+        if (!this.model.hasChanged()) {
+          this.model.trigger("change:" + this.field);
+        }
+        return this.model.editing = false;
+      };
+
+      return ListItemCell;
 
     })(Backbone.View);
     Ribs.List = (function(_super) {
@@ -317,7 +422,9 @@
         'keypress': 'keypressed',
         'focusin': 'focusin',
         'focusout': 'focusout',
-        'click .header .toggle': 'toggleSelected'
+        'click .header .toggle': 'toggleSelected',
+        'click .maximize .minimize': 'toggleVisibility',
+        'click [data-sort-by]': 'sortByField'
       };
 
       List.prototype.jumpSelector = ".list li:first";
@@ -333,7 +440,7 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var key,
+        var els, key,
           _this = this;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
@@ -345,10 +452,15 @@
         _.extend(this, options);
         key = _.uniqueId('ribs_view_');
         Ribs._registeredListViews[key] = this;
-        List.__super__.constructor.call(this, options);
-        _.each(this.renderOrder, function(t) {
+        els = _.map(this.renderOrder, function(t) {
           if (!_this["suppress" + t]) {
             return _this["initialize" + t]();
+          }
+        });
+        List.__super__.constructor.call(this, options);
+        _.each(els, function(el) {
+          if (el) {
+            return _this.$el.append(el);
           }
         });
         if (this.jumpkey != null) {
@@ -356,9 +468,11 @@
             return this.$el.find(this.jumpSelector).focus();
           }, this);
         }
+        this._subviews = [];
         if (this.collection != null) {
           this.setCollection(this.collection);
         }
+        this.on('refresh', this.refresh);
       }
 
       List.prototype.setCollection = function(collection) {
@@ -369,7 +483,9 @@
             return action.setCollection(_this.collection);
           }
         });
-        this.collection.on("add", this.addItem, this);
+        this.collection.on("add", function(model) {
+          return _this.addItem(model);
+        }, this);
         this.collection.on("reset", this.addAllItems, this);
         if (this.$header) {
           this.collection.on("selected deselected reset add remove", this.updateHeader, this);
@@ -439,22 +555,13 @@
         return this.$el.toggleClass("minimized", 100);
       };
 
-      List.prototype.sortBy = function(field, old_field) {
-        var dir, el, label, old_el, old_label, re, _ref, _ref1, _ref2;
-        if (this.collection == null) {
-          return;
+      List.prototype.sortByField = function(event) {
+        var field;
+        field = $(event.target).attr("data-sort-by");
+        if (field != null) {
+          this.sortCollectionBy(field);
+          return this.collection.trigger('sorted', field, dir);
         }
-        re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
-        dir = (_ref = this.collection.sortingDirection[field]) != null ? _ref : 1;
-        this.collection.trigger('sorted', field, dir);
-        if (old_field != null) {
-          old_el = this.$header.find("[data-sort-by='" + old_field + "']");
-          old_label = (_ref1 = old_el.html()) != null ? _ref1.replace(re, "") : void 0;
-          $(old_el).html(old_label);
-        }
-        el = this.$header.find("[data-sort-by='" + field + "']");
-        label = (_ref2 = $(el).html()) != null ? _ref2.replace(re, " " + this.sortArrows[dir]) : void 0;
-        return $(el).html(label);
       };
 
       List.prototype.sortCollectionBy = function(field) {
@@ -470,6 +577,8 @@
         }
         dir = this.collection.sortingDirection[field];
         if (this.collection.remoteSort) {
+          this.collection.trigger('remoteSort', field, dir);
+          this.sortBy(field, old_field);
           return;
         }
         this.collection.comparator = function(ma, mb) {
@@ -487,11 +596,29 @@
           }
         };
         this.collection.sort();
-        return this.sortBy(field, old_field);
+        this.render();
+        return this.updateHeaderArrows(field, old_field);
+      };
+
+      List.prototype.updateHeaderArrows = function(field, old_field) {
+        var dir, el, label, old_el, old_label, re, _ref, _ref1, _ref2;
+        if (this.collection == null) {
+          return;
+        }
+        re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
+        dir = (_ref = this.collection.sortingDirection[field]) != null ? _ref : 1;
+        this.collection.trigger('sorted', field, dir);
+        if (old_field != null) {
+          old_el = this.$header.find("[data-sort-by='" + old_field + "']");
+          old_label = (_ref1 = old_el.html()) != null ? _ref1.replace(re, "") : void 0;
+          $(old_el).html(old_label);
+        }
+        el = this.$header.find("[data-sort-by='" + field + "']");
+        label = (_ref2 = $(el).html()) != null ? _ref2.replace(re, " " + this.sortArrows[dir]) : void 0;
+        return $(el).html(label);
       };
 
       List.prototype.keypressed = function(event) {
-        var _this = this;
         if (!(Ribs._readyToJump || $(":focus").is("input:text, textarea"))) {
           if (event.which === 106) {
             return $(":focus").nextAll(".item:visible:not(.disabled):first").focus();
@@ -506,17 +633,23 @@
           } else if (event.which === 88) {
             return this.toggleSelected();
           } else if (event.which === 82) {
-            if (this.collection.url != null) {
-              return this.collection.fetch({
-                success: function() {
-                  var _ref;
-                  return (_ref = _this.$list.find(":first")) != null ? _ref.focus() : void 0;
-                }
-              });
-            }
+            this.collection.trigger('before:refresh');
+            return this.trigger('refresh');
           } else {
             return this.trigger("keypressed", event);
           }
+        }
+      };
+
+      List.prototype.refresh = function() {
+        var _this = this;
+        if (this.collection.url != null) {
+          return this.collection.fetch({
+            success: function() {
+              var _ref;
+              return (_ref = _this.$list.find(":first")) != null ? _ref.focus() : void 0;
+            }
+          });
         }
       };
 
@@ -554,7 +687,7 @@
         this.$title = $($.el.h1({
           "class": "title"
         }, title));
-        return this.$el.append(this.$title);
+        return this.$title;
       };
 
       List.prototype.initializeActions = function() {
@@ -579,7 +712,6 @@
           }
         });
         if (this.batchActions.length) {
-          this.$el.append(this.$batchActions);
           return this.$batchActions;
         } else {
           return null;
@@ -590,26 +722,39 @@
         this.$list = $($.el.ul({
           "class": "list"
         }));
-        this.$el.append(this.$list);
         return this.$list;
       };
 
-      List.prototype.addAllItems = function() {
-        this.$list.empty();
-        return this.collection.each(this.addItem, this);
-      };
-
-      List.prototype.addItem = function(model_instance) {
-        var view;
-        view = new this.itemView({
-          model: model_instance,
+      List.prototype.addItem = function(model) {
+        var itemView, view;
+        if (Backbone.View.prototype.isPrototypeOf(this.itemView.prototype)) {
+          itemView = this.itemView;
+        } else {
+          itemView = this.itemView(model);
+        }
+        view = new itemView({
+          model: model,
           view: this
         });
-        view.render();
         this.$list.append(view.el);
+        view.delegateEvents();
+        this._subviews.push(view);
         if (this.selectedByDefault) {
           return view.$el.trigger("select");
         }
+      };
+
+      List.prototype.addAllItems = function() {
+        var _ref;
+        this._subviews = [];
+        this.$list.empty();
+        return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
+      };
+
+      List.prototype.render = function() {
+        return _.each(this._subviews, function(view, i) {
+          return view.render();
+        });
       };
 
       List.prototype.initializeHeader = function() {
@@ -618,7 +763,6 @@
         this.$header = $($.el.div({
           "class": "header"
         }));
-        this.$el.append(this.$header);
         if (!this.suppressToggle) {
           toggle = $.el.input({
             type: "checkbox",
@@ -646,7 +790,7 @@
           klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
           return _this.$header.append($.el.div({
             "class": klass,
-            "data-sort-by": attribute.field
+            "data-sort-by": attribute.sortField || attribute.field
           }, label));
         });
         this.$header.find(".maximize, .minimize").click(function() {
@@ -683,7 +827,6 @@
         this.$footer = $($.el.div({
           "class": "footer"
         }));
-        this.$el.append(this.$footer);
         this.updateFooter();
         return this.$footer;
       };
@@ -815,7 +958,7 @@
         return this.$el.html(this.drawButton());
       };
 
-      Action.prototype.drawButton = function(inline) {
+      Action.prototype.drawButton = function(inline, listItem) {
         var btn, label, tabindex, _ref, _ref1;
         if (inline == null) {
           inline = false;
@@ -831,9 +974,12 @@
         });
         if (inline) {
           label = (_ref = this.inlineLabel) != null ? _ref : this.label;
+          if ((listItem != null) && label instanceof Function) {
+            label = label.call(this, listItem.model);
+          }
         } else {
           label = (_ref1 = this.batchLabel) != null ? _ref1 : this.label;
-          if ((this.hotkey != null) && !this.inline) {
+          if (this.hotkey != null) {
             label = this.constructor.highlightHotkey(label, this.hotkey);
           }
         }
@@ -845,7 +991,7 @@
       Action.prototype.renderInline = function(listItem) {
         var btn,
           _this = this;
-        btn = this.drawButton(true);
+        btn = this.drawButton(true, listItem);
         btn.addClass("inline");
         $(btn).on("click", function(event) {
           _this.triggerActionInline(event, listItem);
