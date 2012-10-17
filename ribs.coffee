@@ -261,6 +261,10 @@ do ($=jQuery) ->
             @$el.attr("tabindex", -1)
             @model.trigger "disabled"
 
+        remove: ->
+            @deselect()
+            super()
+
         keypressed : (event) -> 
             # __<return>__ and __x__ will toggle selection.
             if event.which in [13, 120] and not @view.suppressToggle
@@ -452,7 +456,6 @@ do ($=jQuery) ->
             @collection.length
             
         toggleSelected : (event) ->
-
             if @selectedByDefault is true 
                 @$list.find(".item.selected").trigger "deselect", silent: true
                 @selectedByDefault = false
@@ -480,7 +483,7 @@ do ($=jQuery) ->
             field = $(event.target).attr("data-sort-by")
             if field?
                 @sortCollectionBy field
-                @collection.trigger('sorted', field, dir)
+                #@collection.trigger('sorted', field) TODO what is this?
 			
         sortCollectionBy: (field) ->
 
@@ -497,21 +500,20 @@ do ($=jQuery) ->
 
             if @collection.remoteSort
                 @collection.trigger 'remoteSort', field, dir
-                @sortBy field, old_field
-                return
+                #@sortBy field, old_field TODO what is this?
+            else
+                @collection.comparator = (ma,mb)=>
+                    a = walk_context field, ma.toJSON()
+                    b = walk_context field, mb.toJSON()
+                    return  0     if a is b
+                    return +1*dir if a > b or not b?
+                    return -1*dir if a < b or not a?
 
-            @collection.comparator = (ma,mb)=>
-                a = walk_context field, ma.toJSON()
-                b = walk_context field, mb.toJSON()
-                return  0     if a is b
-                return +1*dir if a > b or not b?
-                return -1*dir if a < b or not a?
+                @collection.sort()
 
-            @collection.sort()
+                @render()
 
-            @render()
-
-            @updateHeaderArrows field, old_field
+                @updateHeaderArrows field, old_field
 
         updateHeaderArrows : (field, old_field) ->
 
@@ -520,7 +522,7 @@ do ($=jQuery) ->
             re = new RegExp(" (#{_.values(@sortArrows).join("|")})$|$")
             dir = @collection.sortingDirection[field] ? 1
 
-            @collection.trigger('sorted', field, dir)
+            #@collection.trigger('sorted', field, dir) TODO what is this? 
             
             # Remove arrows from previously sorted label.
             if old_field?
@@ -625,12 +627,14 @@ do ($=jQuery) ->
             view = new itemView( model: model, view: this )
             @$list.append(view.el)
             view.delegateEvents()
+            view.render() if @$el.is ":visible"
             @_subviews.push view
-            view.$el.trigger "select" if @selectedByDefault
+            view.select() if @selectedByDefault
 
         addAllItems : ->
             @_subviews = []
             @$list.empty()
+            @collection.trigger "deselected"
             @collection?.each @addItem, this
 
         render: ->
@@ -751,7 +755,7 @@ do ($=jQuery) ->
                 allow = r1 and r2
     
             if allow and @check?
-                allow = @check.apply(@view, [@collection.selected()])
+                allow = @check.apply(@view, [@view.getSelected()])
     
             allow
     

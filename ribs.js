@@ -297,6 +297,11 @@
         return this.model.trigger("disabled");
       };
 
+      ListItem.prototype.remove = function() {
+        this.deselect();
+        return ListItem.__super__.remove.call(this);
+      };
+
       ListItem.prototype.keypressed = function(event) {
         var _ref;
         if (((_ref = event.which) === 13 || _ref === 120) && !this.view.suppressToggle) {
@@ -559,8 +564,7 @@
         var field;
         field = $(event.target).attr("data-sort-by");
         if (field != null) {
-          this.sortCollectionBy(field);
-          return this.collection.trigger('sorted', field, dir);
+          return this.sortCollectionBy(field);
         }
       };
 
@@ -577,27 +581,26 @@
         }
         dir = this.collection.sortingDirection[field];
         if (this.collection.remoteSort) {
-          this.collection.trigger('remoteSort', field, dir);
-          this.sortBy(field, old_field);
-          return;
+          return this.collection.trigger('remoteSort', field, dir);
+        } else {
+          this.collection.comparator = function(ma, mb) {
+            var a, b;
+            a = walk_context(field, ma.toJSON());
+            b = walk_context(field, mb.toJSON());
+            if (a === b) {
+              return 0;
+            }
+            if (a > b || !(b != null)) {
+              return +1 * dir;
+            }
+            if (a < b || !(a != null)) {
+              return -1 * dir;
+            }
+          };
+          this.collection.sort();
+          this.render();
+          return this.updateHeaderArrows(field, old_field);
         }
-        this.collection.comparator = function(ma, mb) {
-          var a, b;
-          a = walk_context(field, ma.toJSON());
-          b = walk_context(field, mb.toJSON());
-          if (a === b) {
-            return 0;
-          }
-          if (a > b || !(b != null)) {
-            return +1 * dir;
-          }
-          if (a < b || !(a != null)) {
-            return -1 * dir;
-          }
-        };
-        this.collection.sort();
-        this.render();
-        return this.updateHeaderArrows(field, old_field);
       };
 
       List.prototype.updateHeaderArrows = function(field, old_field) {
@@ -607,7 +610,6 @@
         }
         re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
         dir = (_ref = this.collection.sortingDirection[field]) != null ? _ref : 1;
-        this.collection.trigger('sorted', field, dir);
         if (old_field != null) {
           old_el = this.$header.find("[data-sort-by='" + old_field + "']");
           old_label = (_ref1 = old_el.html()) != null ? _ref1.replace(re, "") : void 0;
@@ -738,9 +740,12 @@
         });
         this.$list.append(view.el);
         view.delegateEvents();
+        if (this.$el.is(":visible")) {
+          view.render();
+        }
         this._subviews.push(view);
         if (this.selectedByDefault) {
-          return view.$el.trigger("select");
+          return view.select();
         }
       };
 
@@ -748,6 +753,7 @@
         var _ref;
         this._subviews = [];
         this.$list.empty();
+        this.collection.trigger("deselected");
         return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
       };
 
@@ -906,7 +912,7 @@
           allow = r1 && r2;
         }
         if (allow && (this.check != null)) {
-          allow = this.check.apply(this.view, [this.collection.selected()]);
+          allow = this.check.apply(this.view, [this.view.getSelected()]);
         }
         return allow;
       };
