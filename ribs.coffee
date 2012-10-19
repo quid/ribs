@@ -443,9 +443,13 @@ do ($=jQuery) ->
 
         getSelected : ->
             return [] unless @$list?
-            selected = @$list.find(".item.selected").map (idx, el) =>
+            @$list.find(".item.selected").map (idx, el) =>
                 @collection.getByCid $(el).data("cid")
-            selected
+
+        getDeselected: ->
+            return [] unless @$list?
+            @$list.find(".item:not(.selected)").map (idx, el) =>
+                @collection.getByCid $(el).data("cid")
 
         getNumSelected: ->
             return 0 unless @$list?
@@ -636,6 +640,10 @@ do ($=jQuery) ->
             @$list.empty()
             @collection.trigger "deselected"
             @collection?.each @addItem, this
+
+        get: (id) ->
+            _.find @_subviews, (view) ->
+                view.model.id == id
 
         render: ->
             _.each @_subviews, (view,i) ->
