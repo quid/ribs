@@ -20,7 +20,8 @@
             displayAttributes: [
                 {
                     label: "",
-                    field: "name"
+                    field: "name",
+                    editable: true
                 },
                 { 
                     label: "",

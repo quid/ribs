@@ -348,8 +348,11 @@ do ($=jQuery) ->
             changeSet = {}
             changeSet[@field] = field.val()
             @model.changeSet = changeSet
-            @model.save changeSet,
-                wait: true
+            try
+                @model.save changeSet,
+                    wait: true
+            catch e
+                @render()
 
             # BB won't save if nothing changed
             # but we need to rerender to get 
@@ -363,7 +366,7 @@ do ($=jQuery) ->
     class Ribs.List extends Backbone.View
   
         itemView: Ribs.ListItem
-  
+
         tagName: "div"
     
         itemName: "item"
@@ -425,6 +428,7 @@ do ($=jQuery) ->
                 @setCollection @collection
 
             @on 'refresh', @refresh
+            @$el.addClass('ribs')
 
         setCollection: (collection)->
             @collection = collection
@@ -487,7 +491,6 @@ do ($=jQuery) ->
             field = $(event.target).attr("data-sort-by")
             if field?
                 @sortCollectionBy field
-                #@collection.trigger('sorted', field) TODO what is this?
 			
         sortCollectionBy: (field) ->
 
@@ -504,7 +507,6 @@ do ($=jQuery) ->
 
             if @collection.remoteSort
                 @collection.trigger 'remoteSort', field, dir
-                #@sortBy field, old_field TODO what is this?
             else
                 @collection.comparator = (ma,mb)=>
                     a = walk_context field, ma.toJSON()
@@ -517,7 +519,7 @@ do ($=jQuery) ->
 
                 @render()
 
-                @updateHeaderArrows field, old_field
+            @updateHeaderArrows field, old_field
 
         updateHeaderArrows : (field, old_field) ->
 
@@ -525,8 +527,6 @@ do ($=jQuery) ->
 
             re = new RegExp(" (#{_.values(@sortArrows).join("|")})$|$")
             dir = @collection.sortingDirection[field] ? 1
-
-            #@collection.trigger('sorted', field, dir) TODO what is this? 
             
             # Remove arrows from previously sorted label.
             if old_field?
@@ -674,10 +674,6 @@ do ($=jQuery) ->
             @$header.find(".maximize, .minimize").click =>
                 @toggleVisibility()
 
-            @$header.find("[data-sort-by]").click (event) =>
-                field = $(event.target).attr("data-sort-by")
-                if field?
-                    @sortCollectionBy field
             # put arrow on default sorted by
             @$header.find("[data-sort-by=#{@collection.sortingBy}]").append(" #{@sortArrows[1]}")
 

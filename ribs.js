@@ -401,9 +401,13 @@
         changeSet = {};
         changeSet[this.field] = field.val();
         this.model.changeSet = changeSet;
-        this.model.save(changeSet, {
-          wait: true
-        });
+        try {
+          this.model.save(changeSet, {
+            wait: true
+          });
+        } catch (e) {
+          this.render();
+        }
         if (!this.model.hasChanged()) {
           this.model.trigger("change:" + this.field);
         }
@@ -478,6 +482,7 @@
           this.setCollection(this.collection);
         }
         this.on('refresh', this.refresh);
+        this.$el.addClass('ribs');
       }
 
       List.prototype.setCollection = function(collection) {
@@ -502,15 +507,23 @@
       };
 
       List.prototype.getSelected = function() {
-        var selected,
-          _this = this;
+        var _this = this;
         if (this.$list == null) {
           return [];
         }
-        selected = this.$list.find(".item.selected").map(function(idx, el) {
+        return this.$list.find(".item.selected").map(function(idx, el) {
           return _this.collection.getByCid($(el).data("cid"));
         });
-        return selected;
+      };
+
+      List.prototype.getDeselected = function() {
+        var _this = this;
+        if (this.$list == null) {
+          return [];
+        }
+        return this.$list.find(".item:not(.selected)").map(function(idx, el) {
+          return _this.collection.getByCid($(el).data("cid"));
+        });
       };
 
       List.prototype.getNumSelected = function() {
@@ -581,7 +594,7 @@
         }
         dir = this.collection.sortingDirection[field];
         if (this.collection.remoteSort) {
-          return this.collection.trigger('remoteSort', field, dir);
+          this.collection.trigger('remoteSort', field, dir);
         } else {
           this.collection.comparator = function(ma, mb) {
             var a, b;
@@ -599,8 +612,8 @@
           };
           this.collection.sort();
           this.render();
-          return this.updateHeaderArrows(field, old_field);
         }
+        return this.updateHeaderArrows(field, old_field);
       };
 
       List.prototype.updateHeaderArrows = function(field, old_field) {
@@ -757,6 +770,12 @@
         return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
       };
 
+      List.prototype.get = function(id) {
+        return _.find(this._subviews, function(view) {
+          return view.model.id === id;
+        });
+      };
+
       List.prototype.render = function() {
         return _.each(this._subviews, function(view, i) {
           return view.render();
@@ -801,13 +820,6 @@
         });
         this.$header.find(".maximize, .minimize").click(function() {
           return _this.toggleVisibility();
-        });
-        this.$header.find("[data-sort-by]").click(function(event) {
-          var field;
-          field = $(event.target).attr("data-sort-by");
-          if (field != null) {
-            return _this.sortCollectionBy(field);
-          }
         });
         this.$header.find("[data-sort-by=" + this.collection.sortingBy + "]").append(" " + this.sortArrows[1]);
         return this.$header;
