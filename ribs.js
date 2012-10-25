@@ -699,6 +699,9 @@
       List.prototype.initializeTitle = function() {
         var title, _ref;
         title = (_ref = this.title) != null ? _ref : this.plural();
+        if (title instanceof Function) {
+          title = title.call(this);
+        }
         this.$title = $($.el.h1({
           "class": "title"
         }, title));

@@ -591,6 +591,7 @@ do ($=jQuery) ->
         
         initializeTitle: -> 
             title = @title ? @plural()
+            title = title.call this if title instanceof Function
             @$title = $( $.el.h1 {class: "title"}, title )
             @$title
         
