@@ -156,7 +156,7 @@
     };
     $(window).on("keypress", function(event) {
       var prefix;
-      if (!$(":focus").is("input:text, textarea")) {
+      if (!$(document.activeElement).is("input:text, textarea")) {
         prefix = Ribs._jumpPrefixKey.charCodeAt(0);
         if (event.which === prefix && !Ribs._readyToJump) {
           return Ribs._poiseJump();
@@ -354,7 +354,7 @@
       };
 
       ListItemCell.prototype.render = function() {
-        var editableEl, _ref;
+        var editableEl, label, _ref, _ref1;
         this.$el.empty();
         if (this.escape) {
           this.$el.text(this.renderableValue());
@@ -362,10 +362,12 @@
           this.$el.html(this.renderableValue());
         }
         if (this.editable) {
+          label = (_ref = this.label) != null ? _ref : this.field;
           editableEl = $.el.span({
-            "class": 'edit button inline'
+            "class": 'edit button inline',
+            title: "Edit " + label
           }, '✎');
-          if ((_ref = this.model.get(this.field)) === null || _ref === '') {
+          if ((_ref1 = this.model.get(this.field)) === null || _ref1 === '') {
             $(editableEl).addClass('show');
           } else {
             $(editableEl).removeClass('show');
@@ -533,6 +535,13 @@
         return this.$list.find(".item.selected").size();
       };
 
+      List.prototype.getNumDeselected = function() {
+        if (this.$list == null) {
+          return 0;
+        }
+        return this.$list.find(".item:not(.selected)").size();
+      };
+
       List.prototype.getNumTotal = function() {
         if (this.collection == null) {
           return 0;
@@ -634,11 +643,11 @@
       };
 
       List.prototype.keypressed = function(event) {
-        if (!(Ribs._readyToJump || $(":focus").is("input:text, textarea"))) {
+        if (!(Ribs._readyToJump || $(document.activeElement).is("input:text, textarea"))) {
           if (event.which === 106) {
-            return $(":focus").nextAll(".item:visible:not(.disabled):first").focus();
+            return $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus();
           } else if (event.which === 107) {
-            return $(":focus").prevAll(".item:visible:not(.disabled):first").focus();
+            return $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus();
           } else if (event.which === 74) {
             return this.$list.find(".item:last").focus();
           } else if (event.which === 75) {

@@ -145,7 +145,7 @@ do ($=jQuery) ->
     # Main jumpkey handler.
     # TODO: wrap this in an optionally called `enableKeyboardShortcuts` method.
     $(window).on "keypress", (event) ->
-        unless $(":focus").is("input:text, textarea")
+        unless $(document.activeElement).is("input:text, textarea")
             prefix = Ribs._jumpPrefixKey.charCodeAt(0)
             if event.which is prefix and not Ribs._readyToJump
                 Ribs._poiseJump()
@@ -315,7 +315,10 @@ do ($=jQuery) ->
                 @$el.html(@renderableValue())
 
             if @editable
-                editableEl = $.el.span(class: 'edit button inline', '✎')
+                label = @label ? @field
+                editableEl = $.el.span {
+                    class: 'edit button inline', 
+                    title: "Edit #{label}"}, '✎'
                 if @model.get(@field) in [null, '']
                     $(editableEl).addClass('show')
                 else
@@ -459,6 +462,10 @@ do ($=jQuery) ->
             return 0 unless @$list?
             @$list.find(".item.selected").size()
 
+        getNumDeselected: ->
+            return 0 unless @$list?
+            @$list.find(".item:not(.selected)").size()
+
         getNumTotal: ->
             return 0 unless @collection?
             @collection.length
@@ -540,11 +547,11 @@ do ($=jQuery) ->
             $(el).html(label)
     
         keypressed : (event) ->
-            unless Ribs._readyToJump or $(":focus").is("input:text, textarea")
+            unless Ribs._readyToJump or $(document.activeElement).is("input:text, textarea")
                 if event.which is 106 # j
-                    $(":focus").nextAll(".item:visible:not(.disabled):first").focus()
+                    $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus()
                 else if event.which is 107 # k
-                    $(":focus").prevAll(".item:visible:not(.disabled):first").focus()
+                    $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus()
                 else if event.which is 74 # J
                     @$list.find(".item:last").focus()
                 else if event.which is 75 # K
