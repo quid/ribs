@@ -290,18 +290,17 @@ do ($=jQuery) ->
 
             @events ||= {}
             _.extend @events, @_ribsEvents
-            _.extend this, options
+            _.extend this, options # TODO remove this
             super options
             @$el.addClass(@options.class ? @options.field)
-            @model.on "change change:#{@field}", @render, this
+            @model.on "change change:#{@options.field}", @render, this
 
         renderableValue: (nomap) ->
             # first check if it is a top level attribute
-            value = @model.get(@field)
+            value = @model.get(@options.field)
             # else see if it is a nested attribute
-            value ||= walk_context(@field, @model.toJSON())
-            if "map" of @options and !nomap
-                value = @map value, @model, @$el
+            value ||= walk_context(@options.field, @model.toJSON())
+            value = @options.map value, @model, @$el if @options.map? and !nomap
             value
 
         render: ()->
@@ -309,17 +308,17 @@ do ($=jQuery) ->
 
             # cells are rendered as html by default
             # unless escape is set 
-            if @escape
+            if @options.escape
                 @$el.text(@renderableValue())
             else
                 @$el.html(@renderableValue())
 
             if @editable
-                label = @label ? @field
+                label = @options.label ? @options.field
                 editableEl = $.el.span {
                     class: 'edit button inline', 
                     title: "Edit #{label}"}, '✎'
-                if @model.get(@field) in [null, '']
+                if @model.get(@options.field) in [null, '']
                     $(editableEl).addClass('show')
                 else
                     $(editableEl).removeClass('show')
@@ -332,10 +331,10 @@ do ($=jQuery) ->
             # bind events for when it is editable
             # and swap out the cell with any passed
             # in element
-            if @editable
+            if @options.editable
                 # default to a text field
-                if @editable instanceof Function
-                    editField = $(@editable(@renderableValue(true), @model))
+                if @options.editable instanceof Function
+                    editField = $(@options.editable(@renderableValue(true), @model))
                 else
                     editField = $($.el.input(type: 'text', value: @renderableValue(true)))
                 editField.addClass("editableField")
@@ -349,7 +348,7 @@ do ($=jQuery) ->
         saveEditedField: (e) ->
             field = $(e.target)
             changeSet = {}
-            changeSet[@field] = field.val()
+            changeSet[@options.field] = field.val()
             @model.changeSet = changeSet
             try
                 @model.save changeSet,
@@ -361,7 +360,7 @@ do ($=jQuery) ->
             # but we need to rerender to get 
             # the old cell view back
             unless @model.hasChanged()
-                @model.trigger("change:#{@field}")
+                @model.trigger("change:#{@options.field}")
 
             @model.editing = false
 
@@ -435,12 +434,14 @@ do ($=jQuery) ->
 
         setCollection: (collection)->
             @collection = collection
+            # Update actions
             _.each _.union(@inlineActions, @batchActions), (action) =>
                 action.setCollection @collection if action?
-            # Bind events to collection.
-            @collection.on "add", (model) => 
-                @addItem(model)
-            , this
+
+            # Unbind events
+            @collection.off "selected deselected reset add remove", null, this
+            # Bind events to collection
+            @collection.on "add", @addItem, this
             @collection.on "reset", @addAllItems, this
             @collection.on "selected deselected reset add remove", @updateHeader, this if @$header
             @collection.on "selected deselected reset add remove", @updateFooter, this if @$footer
@@ -736,13 +737,15 @@ do ($=jQuery) ->
 
             @setCollection @collection if @collection?
 
+            @view.on "keypressed", @keypressedOnView, this if @hotkey?
+
             @checkRequirements()
     
         setCollection: (collection) ->
             if collection?
                 @collection = collection
+                @collection.off "selected deselected reset", null, this
                 @collection.on "selected deselected reset", @checkRequirements, this
-                @view.on "keypressed", @keypressedOnView, this if @hotkey?
   
         checkRequirements: ->
             enable = @allowed()

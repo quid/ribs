@@ -340,15 +340,15 @@
         _.extend(this, options);
         ListItemCell.__super__.constructor.call(this, options);
         this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
-        this.model.on("change change:" + this.field, this.render, this);
+        this.model.on("change change:" + this.options.field, this.render, this);
       }
 
       ListItemCell.prototype.renderableValue = function(nomap) {
         var value;
-        value = this.model.get(this.field);
-        value || (value = walk_context(this.field, this.model.toJSON()));
-        if ("map" in this.options && !nomap) {
-          value = this.map(value, this.model, this.$el);
+        value = this.model.get(this.options.field);
+        value || (value = walk_context(this.options.field, this.model.toJSON()));
+        if ((this.options.map != null) && !nomap) {
+          value = this.options.map(value, this.model, this.$el);
         }
         return value;
       };
@@ -356,18 +356,18 @@
       ListItemCell.prototype.render = function() {
         var editableEl, label, _ref, _ref1;
         this.$el.empty();
-        if (this.escape) {
+        if (this.options.escape) {
           this.$el.text(this.renderableValue());
         } else {
           this.$el.html(this.renderableValue());
         }
         if (this.editable) {
-          label = (_ref = this.label) != null ? _ref : this.field;
+          label = (_ref = this.options.label) != null ? _ref : this.options.field;
           editableEl = $.el.span({
             "class": 'edit button inline',
             title: "Edit " + label
           }, '✎');
-          if ((_ref1 = this.model.get(this.field)) === null || _ref1 === '') {
+          if ((_ref1 = this.model.get(this.options.field)) === null || _ref1 === '') {
             $(editableEl).addClass('show');
           } else {
             $(editableEl).removeClass('show');
@@ -379,9 +379,9 @@
 
       ListItemCell.prototype.edit = function() {
         var editField;
-        if (this.editable) {
-          if (this.editable instanceof Function) {
-            editField = $(this.editable(this.renderableValue(true), this.model));
+        if (this.options.editable) {
+          if (this.options.editable instanceof Function) {
+            editField = $(this.options.editable(this.renderableValue(true), this.model));
           } else {
             editField = $($.el.input({
               type: 'text',
@@ -401,7 +401,7 @@
         var changeSet, field;
         field = $(e.target);
         changeSet = {};
-        changeSet[this.field] = field.val();
+        changeSet[this.options.field] = field.val();
         this.model.changeSet = changeSet;
         try {
           this.model.save(changeSet, {
@@ -411,7 +411,7 @@
           this.render();
         }
         if (!this.model.hasChanged()) {
-          this.model.trigger("change:" + this.field);
+          this.model.trigger("change:" + this.options.field);
         }
         return this.model.editing = false;
       };
@@ -495,9 +495,8 @@
             return action.setCollection(_this.collection);
           }
         });
-        this.collection.on("add", function(model) {
-          return _this.addItem(model);
-        }, this);
+        this.collection.off("selected deselected reset add remove", null, this);
+        this.collection.on("add", this.addItem, this);
         this.collection.on("reset", this.addAllItems, this);
         if (this.$header) {
           this.collection.on("selected deselected reset add remove", this.updateHeader, this);
@@ -896,16 +895,17 @@
         if (this.collection != null) {
           this.setCollection(this.collection);
         }
+        if (this.hotkey != null) {
+          this.view.on("keypressed", this.keypressedOnView, this);
+        }
         this.checkRequirements();
       }
 
       Action.prototype.setCollection = function(collection) {
         if (collection != null) {
           this.collection = collection;
-          this.collection.on("selected deselected reset", this.checkRequirements, this);
-          if (this.hotkey != null) {
-            return this.view.on("keypressed", this.keypressedOnView, this);
-          }
+          this.collection.off("selected deselected reset", null, this);
+          return this.collection.on("selected deselected reset", this.checkRequirements, this);
         }
       };
 
