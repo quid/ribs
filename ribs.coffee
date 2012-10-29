@@ -638,11 +638,20 @@ do ($=jQuery) ->
             else
                 itemView = @itemView(model)
             view = new itemView( model: model, view: this )
-            @$list.append(view.el)
+
+            # Respect collection insertion order
+            idx = @collection.indexOf(model)
+            if @$list.children().size() in [0, idx]
+                @$list.append view.el
+            else
+                @$list.children(":nth-child(#{ idx + 1 })").before view.el
+
             view.delegateEvents()
             view.render() if @$el.is ":visible"
             @_subviews.push view
             view.select() if @selectedByDefault
+
+            
 
         addAllItems : ->
             @_subviews = []
