@@ -1,0 +1,32 @@
+{
+    "name": "ribs", 
+    "version": "0.0.2",
+    "description": "Ribs sits upon Backbone to provide a functional list widget.",
+    "contributors": [
+        "Joey Hobbs <joey@quid.com>",
+        "Sam Dalton <sam@quid.com>"
+    ],
+    "docco_husky": {
+        "output_dir": ".", 
+        "project_name": "Ribs", 
+        "show_timestamp": false,
+        "repository" : "https://github.com/quid/ribs.git"
+    }, 
+    "dependencies":{},
+    "devDependencies":{
+        "coffee-script": "*",
+        "uglify-js": "*",
+        "docco-husky": "*"
+    },
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/quid/ribs.git"
+    },
+    "licenses": {
+        "type": "MIT", 
+        "url": "http://opensource.org/licenses/mit-license.php"
+    }, 
+    "scripts" : {
+        "docs": "cake build && cake -u build && docco-husky *.md ribs.coffee demo/todos.js"
+    }
+}
