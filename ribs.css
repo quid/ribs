@@ -1,94 +1,119 @@
 .ribs {
-  font-family: verdana, arial, sans-serif;
-  text-align: left; }
-  .ribs.focussed .list {
-    /*border: 1px solid #bdf; */ }
-  .ribs .title {
+    font-family: verdana, arial, sans-serif;
+    text-align: left; 
+}
+.ribs.focussed .list {
+    /*border: 1px solid #bdf; */ 
+}
+.ribs .title {
     font-size: 20pt;
     font-weight: normal;
     display: inline-block;
     margin: 0 20px 0 0;
     text-transform: capitalize;
-    /*font-variant: small-caps; */ }
-  .ribs.minimized .list {
+    /*font-variant: small-caps; */ 
+}
+.ribs.minimized .list {
     height: 2px;
     overflow: hidden;
-    border: 1px solid #aaaaaa; }
-  .ribs ul {
+    border: 1px solid #aaaaaa; 
+}
+.ribs ul {
     padding: 0;
-    margin: 0; }
-  .ribs li {
+    margin: 0; 
+}
+.ribs li {
     list-style-type: none;
     cursor: pointer;
     outline: none;
-    background: #eeeeee; }
-  .ribs .actions {
+    background: #eeeeee; 
+}
+.ribs .actions {
     margin-bottom: 10px;
-    display: inline-block; }
-  .ribs .action {
+    display: inline-block; 
+}
+.ribs .action {
     display: inline-block;
-    margin-right: 10px; }
-  .ribs .button strong {
-    font-weight: normal; }
-  .ribs.focussed strong {
-    font-weight: bold; }
-  .ribs .button {
+    margin-right: 10px; 
+}
+.ribs .button strong {
+    font-weight: normal; 
+}
+.ribs.focussed strong {
+    font-weight: bold;
+}
+.ribs .button {
     border-radius: 4px;
     background: white;
     border: 1px solid #aaaaaa;
-    padding: 2px 6px; }
-    .ribs .button:focus {
-      background: steelblue;
-      color: white;
-      outline: none; }
-  .ribs .disabled .button {
+    padding: 2px 6px;
+}
+.ribs .button:focus {
+    background: steelblue;
+    color: white;
+    outline: none;
+}
+.ribs .disabled .button {
     color: #cccccc;
     background: white;
-    cursor: default; }
-    .ribs .disabled .button:focus {
-      color: #cccccc;
-      background: white;
-      cursor: default; }
-  .ribs .list {
+    cursor: default;
+}
+.ribs .disabled .button:focus {
+    color: #cccccc;
+    background: white;
+    cursor: default;
+}
+.ribs .list {
     border: 1px solid #aaaaaa;
     border-bottom: 0 none;
     overflow-y: scroll;
-    overflow-x: auto; }
-  .ribs .item div, .ribs .header div {
+    overflow-x: auto;
+}
+.ribs .item div, .ribs .header div {
     padding: 6px 10px;
     display: inline-block;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; }
-  .ribs .item {
+    text-overflow: ellipsis;
+}
+.ribs .item {
     overflow: hidden;
     white-space: nowrap;
     border-top: 1px solid white;
-    border-bottom: 1px solid #aaaaaa; }
-    .ribs .item > div:hover {
-      white-space: normal;
-      text-overflow: none; }
-    .ribs .item:active {
-      background: #dddddd; }
-    .ribs .item.selected:active {
-      background: #ccddee; }
-    .ribs .item:focus {
-      border-left: 4px solid steelblue; }
-      .ribs .item:focus > :first-child {
-        padding-left: 6px; }
-    .ribs .item.selected {
-      background: #ddeeff; }
-  .ribs .list .button {
+    border-bottom: 1px solid #aaaaaa;
+}
+.ribs .item > div:hover {
+    white-space: normal;
+    text-overflow: none;
+}
+.ribs .item:active {
+    background: #dddddd;
+}
+.ribs .item.selected:active {
+    background: #ccddee;
+}
+.ribs .item:focus {
+    border-left: 4px solid steelblue;
+}
+.ribs .item:focus > :first-child {
+    padding-left: 6px;
+}
+.ribs .item.selected {
+    background: #ddeeff;
+}
+.ribs .list .button {
     font-size: 80%;
     padding: 1px 3px;
-    margin: 2px; }
-  .ribs .header {
+    margin: 2px;
+}
+.ribs .header {
     border: 1px solid #aaaaaa;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     border-bottom: 0 none;
-    background: #f8f8f8; }
-  .ribs .footer {
+    background: #f8f8f8;
+}
+.ribs .footer {
     padding: 6px 10px;
     text-align: right;
     background: #f8f8f8;
@@ -97,59 +122,60 @@
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
     font-size: 80%;
-    color: #666666; }
+    color: #666666;
+}
 
-/* title */
-/* actions/buttons */
-/* list */
-/* header */
-/* footer */
-/* keyboard shortcuts overlay */
 .ribs-keyboard-shortcuts-overlay {
-  position: absolute;
-  text-align: left;
-  top: 50%;
-  left: 50%;
-  margin-top: -200px;
-  margin-left: -300px;
-  height: 400px;
-  width: 600px;
-  background: rgba(0, 0, 0, 0.75);
-  border: 1px solid white;
-  border-radius: 10px;
-  -webkit-box-shadow: 0 0 40px 2px black;
-  box-shadow: 0 0 40px 2px black;
-  text-shadow: 0px 0px 3px black;
-  overflow: auto;
-  padding: 20px;
-  color: white;
-  font-family: Helvetica, Arial, sans-serif; }
-  .ribs-keyboard-shortcuts-overlay h1 {
+    position: absolute;
+    text-align: left;
+    top: 50%;
+    left: 50%;
+    margin-top: -200px;
+    margin-left: -300px;
+    height: 400px;
+    width: 600px;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid white;
+    border-radius: 10px;
+    -webkit-box-shadow: 0 0 40px 2px black;
+    box-shadow: 0 0 40px 2px black;
+    text-shadow: 0px 0px 3px black;
+    overflow: auto;
+    padding: 20px;
+    color: white;
+    font-family: Helvetica, Arial, sans-serif;
+}
+.ribs-keyboard-shortcuts-overlay h1 {
     margin: 0 0 10px;
     font-size: 16pt;
     text-transform: capitalize;
-    font-variant: small-caps; }
-  .ribs-keyboard-shortcuts-overlay ul {
+    font-variant: small-caps;
+}
+.ribs-keyboard-shortcuts-overlay ul {
     overflow: hidden;
-    padding: 0; }
-  .ribs-keyboard-shortcuts-overlay li {
+    padding: 0;
+}
+.ribs-keyboard-shortcuts-overlay li {
     list-style-type: none;
     float: left;
     width: 250px;
     margin-right: 20px;
-    margin-bottom: 10px; }
-  .ribs-keyboard-shortcuts-overlay .key {
+    margin-bottom: 10px;
+}
+.ribs-keyboard-shortcuts-overlay .key {
     display: inline-block;
-    width: 30px; }
-  .ribs-keyboard-shortcuts-overlay .jump:first-letter {
-    color: #cccccc; }
-
+    width: 30px;
+}
+.ribs-keyboard-shortcuts-overlay .jump:first-letter {
+    color: #cccccc;
+}
 .item:hover .edit.button.inline {
-  display: inline; }
-
+    display: inline;
+}
 .edit.button.inline {
-  display: none; }
-
+    display: none;
+}
 .ribs-editing {
-  background: white;
-  font-style: italic; }
+    background: white;
+    font-style: italic;
+}
