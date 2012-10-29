@@ -51,9 +51,9 @@
                         var name = prompt("What do you need to do?");
                         if (name && name !== "") {
                             // Add it to the collection.
-                            model = this.collection.push({ name: name, completed: false});
-                            // Give keyboard focus to new item.
-                            model.trigger("stealfocus");
+                            var model = this.collection.push({ name: name, completed: false});
+                            // Focus the item
+                            this.getByCid(model.cid).$el.focus();
                         }
                     }
                 },
@@ -67,7 +67,7 @@
                         if (listItem !== undefined){
                             // If triggered inline.
                             listItem.model.set("completed", true);
-                            listItem.model.trigger("stealfocus");
+                            this.getByCid(listItem.model.cid).$el.focus();
                         } else { 
                             // if triggered by batch.
                             _.each(selected, function(model) {
@@ -88,7 +88,7 @@
                         if (listItem !== undefined){
                             // If triggered inline.
                             listItem.model.set("completed", false);
-                            listItem.model.trigger("stealfocus");
+                            this.getByCid(listItem.model.cid).$el.focus();
                         } else { 
                             // If triggered by batch.
                             _.each(selected, function(model) {
@@ -122,11 +122,12 @@
 
         });
 
-        // Render the Ribs list.
-        todos_view.render();
 
         // Add the Ribs list to the DOM.
         $("body").prepend(todos_view.el);
+
+        // Render the Ribs list.
+        todos_view.render();
         $("a[href=#showKeyboardBindings]").click(function() {
             Ribs.showKeyboardBindings();
             return false;

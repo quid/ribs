@@ -103,8 +103,8 @@
 }
 .ribs .list .button {
     font-size: 80%;
+    margin: 0 0 0 4px;
     padding: 1px 3px;
-    margin: 2px;
 }
 .ribs .header {
     border: 1px solid #aaaaaa;

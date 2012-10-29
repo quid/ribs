@@ -409,14 +409,14 @@ do ($=jQuery) ->
             key = _.uniqueId('ribs_view_')
             Ribs._registeredListViews[key] = this
 
-            # Construct internal components.
-            els = _.map @renderOrder, (t) =>
-                @["initialize#{t}"]() unless @["suppress#{t}"]
+            # Construct internal components (title, header, list etc.)
+            @components = []
+            _.each @renderOrder, (t) =>
+                l = t.replace /^./, "$#{t[0].toLowerCase()}"
+                @[l] = @["initialize#{t}"]() unless @["suppress#{t}"]
+                @components.push @[l] if l of @
 
             super options
-
-            _.each els, (el) =>
-                @$el.append el if el
 
             # Bind jump key.
             if @jumpkey?
@@ -424,18 +424,32 @@ do ($=jQuery) ->
                     @$el.find(@jumpSelector).focus()
                 , this
 
+            @on 'refresh', @refresh
+            @$el.addClass('ribs')
+
+            @build()
+        
+        build: ->
+            @$el.empty()
+
+            _.each @components, (t) =>
+                @$el.append t
+
             @_subviews = []
 
             if @collection?
                 @setCollection @collection
 
-            @on 'refresh', @refresh
-            @$el.addClass('ribs')
-
+        render: ->
+            _.each @_subviews, (view,i) ->
+                view.render()
+            @updateFooter if @$footer
+            @updateHeader if @$header
+        
         setCollection: (collection)->
             @collection = collection
             # Update actions
-            _.each _.union(@inlineActions, @batchActions), (action) =>
+            _.each @allActions, (action) =>
                 action.setCollection @collection if action?
 
             # Unbind events
@@ -573,7 +587,7 @@ do ($=jQuery) ->
             if @collection.url?
                 @collection.fetch
                     success: =>
-                        @$list.find(":first")?.focus()
+                        @$list.find(".item:first")?.focus()
 
 
         focusin : (event) ->
@@ -600,15 +614,16 @@ do ($=jQuery) ->
         initializeTitle: -> 
             title = @title ? @plural()
             title = title.call this if title instanceof Function
-            @$title = $( $.el.h1 {class: "title"}, title )
-            @$title
+            $title = $( $.el.h1 {class: "title"}, title )
+            $title
         
         initializeActions: ->
             
             @batchActions = []
             @inlineActions = []
+            @allActions = []
 
-            @$batchActions = $($.el.ul class: "actions")
+            $batchActions = $($.el.ul class: "actions")
             
             # populate @batchActions and @inlineActions with instance of
             # `Ribs.Action` based on @actions
@@ -621,16 +636,17 @@ do ($=jQuery) ->
                 if action.batch isnt false
                     @batchActions.push action
                     action.render()
-                    @$batchActions.append action.el
+                    $batchActions.append action.el
+                @allActions.push action
 
             if @batchActions.length
-                @$batchActions
+                $batchActions
             else
                 null
         
         initializeList: ->
-            @$list = $($.el.ul( class: "list"))
-            @$list
+            $list = $($.el.ul( class: "list"))
+            $list
         
         addItem : (model) ->
             if Backbone.View::isPrototypeOf(@itemView::)
@@ -651,29 +667,29 @@ do ($=jQuery) ->
             @_subviews.push view
             view.select() if @selectedByDefault
 
-            
-
         addAllItems : ->
             @_subviews = []
             @$list.empty()
             @collection.trigger "deselected"
             @collection?.each @addItem, this
 
+        # Gets list item view by model ID
         get: (id) ->
             _.find @_subviews, (view) ->
                 view.model.id == id
 
-        render: ->
-            _.each @_subviews, (view,i) ->
-                view.render()
+        # Gets list item view by CID
+        getByCid: (cid) ->
+            _.find @_subviews, (view) ->
+                view.model.cid == cid
 
         initializeHeader: ->
-            @$header = $($.el.div class: "header")
+            $header = $($.el.div class: "header")
 
             unless @suppressToggle
                 toggle = $.el.input(type: "checkbox", tabindex: -1 )
                 $(toggle).attr("checked", "checked") if @selectedByDefault
-                @$header.append $.el.div({class:"toggle"}, toggle)
+                $header.append $.el.div({class:"toggle"}, toggle)
 
             if @displayAttributes?
                 attributes = @displayAttributes
@@ -683,19 +699,19 @@ do ($=jQuery) ->
             _.each attributes, (attribute) =>
                 label = attribute.label ? attribute.field
                 klass = attribute.class ? attribute.field
-                @$header.append $.el.div(
+                $header.append $.el.div(
                     {class: klass, "data-sort-by": (attribute.sortField or attribute.field)}, 
                     label
                 )
 
             # sorting and minimizing/maximizing
-            @$header.find(".maximize, .minimize").click =>
+            $header.find(".maximize, .minimize").click =>
                 @toggleVisibility()
 
             # put arrow on default sorted by
-            @$header.find("[data-sort-by=#{@collection.sortingBy}]").append(" #{@sortArrows[1]}")
+            $header.find("[data-sort-by=#{@collection.sortingBy}]").append(" #{@sortArrows[1]}")
 
-            @$header
+            $header
 
         updateHeader: ->
             n = @getNumSelected()
@@ -710,9 +726,8 @@ do ($=jQuery) ->
                 .css("opacity", opacity)
 
         initializeFooter: ->
-            @$footer = $($.el.div class: "footer")
-            @updateFooter()
-            @$footer
+            $footer = $($.el.div class: "footer")
+            $footer
 
         updateFooter : ->
             plural = @getNumTotal() isnt 1

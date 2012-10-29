@@ -451,7 +451,7 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var els, key,
+        var key,
           _this = this;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
@@ -463,34 +463,56 @@
         _.extend(this, options);
         key = _.uniqueId('ribs_view_');
         Ribs._registeredListViews[key] = this;
-        els = _.map(this.renderOrder, function(t) {
+        this.components = [];
+        _.each(this.renderOrder, function(t) {
+          var l;
+          l = t.replace(/^./, "$" + (t[0].toLowerCase()));
           if (!_this["suppress" + t]) {
-            return _this["initialize" + t]();
+            _this[l] = _this["initialize" + t]();
+          }
+          if (l in _this) {
+            return _this.components.push(_this[l]);
           }
         });
         List.__super__.constructor.call(this, options);
-        _.each(els, function(el) {
-          if (el) {
-            return _this.$el.append(el);
-          }
-        });
         if (this.jumpkey != null) {
           Ribs.bindJumpKey(this.plural(), this.jumpkey, function() {
             return this.$el.find(this.jumpSelector).focus();
           }, this);
         }
-        this._subviews = [];
-        if (this.collection != null) {
-          this.setCollection(this.collection);
-        }
         this.on('refresh', this.refresh);
         this.$el.addClass('ribs');
+        this.build();
       }
+
+      List.prototype.build = function() {
+        var _this = this;
+        this.$el.empty();
+        _.each(this.components, function(t) {
+          return _this.$el.append(t);
+        });
+        this._subviews = [];
+        if (this.collection != null) {
+          return this.setCollection(this.collection);
+        }
+      };
+
+      List.prototype.render = function() {
+        _.each(this._subviews, function(view, i) {
+          return view.render();
+        });
+        if (this.$footer) {
+          this.updateFooter;
+        }
+        if (this.$header) {
+          return this.updateHeader;
+        }
+      };
 
       List.prototype.setCollection = function(collection) {
         var _this = this;
         this.collection = collection;
-        _.each(_.union(this.inlineActions, this.batchActions), function(action) {
+        _.each(this.allActions, function(action) {
           if (action != null) {
             return action.setCollection(_this.collection);
           }
@@ -670,7 +692,7 @@
           return this.collection.fetch({
             success: function() {
               var _ref;
-              return (_ref = _this.$list.find(":first")) != null ? _ref.focus() : void 0;
+              return (_ref = _this.$list.find(".item:first")) != null ? _ref.focus() : void 0;
             }
           });
         }
@@ -705,22 +727,24 @@
       };
 
       List.prototype.initializeTitle = function() {
-        var title, _ref;
+        var $title, title, _ref;
         title = (_ref = this.title) != null ? _ref : this.plural();
         if (title instanceof Function) {
           title = title.call(this);
         }
-        this.$title = $($.el.h1({
+        $title = $($.el.h1({
           "class": "title"
         }, title));
-        return this.$title;
+        return $title;
       };
 
       List.prototype.initializeActions = function() {
-        var _this = this;
+        var $batchActions,
+          _this = this;
         this.batchActions = [];
         this.inlineActions = [];
-        this.$batchActions = $($.el.ul({
+        this.allActions = [];
+        $batchActions = $($.el.ul({
           "class": "actions"
         }));
         _.each(this.actions, function(actionConfig) {
@@ -734,25 +758,27 @@
           if (action.batch !== false) {
             _this.batchActions.push(action);
             action.render();
-            return _this.$batchActions.append(action.el);
+            $batchActions.append(action.el);
           }
+          return _this.allActions.push(action);
         });
         if (this.batchActions.length) {
-          return this.$batchActions;
+          return $batchActions;
         } else {
           return null;
         }
       };
 
       List.prototype.initializeList = function() {
-        this.$list = $($.el.ul({
+        var $list;
+        $list = $($.el.ul({
           "class": "list"
         }));
-        return this.$list;
+        return $list;
       };
 
       List.prototype.addItem = function(model) {
-        var itemView, view;
+        var idx, itemView, view, _ref;
         if (Backbone.View.prototype.isPrototypeOf(this.itemView.prototype)) {
           itemView = this.itemView;
         } else {
@@ -762,7 +788,12 @@
           model: model,
           view: this
         });
-        this.$list.append(view.el);
+        idx = this.collection.indexOf(model);
+        if ((_ref = this.$list.children().size()) === 0 || _ref === idx) {
+          this.$list.append(view.el);
+        } else {
+          this.$list.children(":nth-child(" + (idx + 1) + ")").before(view.el);
+        }
         view.delegateEvents();
         if (this.$el.is(":visible")) {
           view.render();
@@ -787,16 +818,16 @@
         });
       };
 
-      List.prototype.render = function() {
-        return _.each(this._subviews, function(view, i) {
-          return view.render();
+      List.prototype.getByCid = function(cid) {
+        return _.find(this._subviews, function(view) {
+          return view.model.cid === cid;
         });
       };
 
       List.prototype.initializeHeader = function() {
-        var attributes, toggle,
+        var $header, attributes, toggle,
           _this = this;
-        this.$header = $($.el.div({
+        $header = $($.el.div({
           "class": "header"
         }));
         if (!this.suppressToggle) {
@@ -807,7 +838,7 @@
           if (this.selectedByDefault) {
             $(toggle).attr("checked", "checked");
           }
-          this.$header.append($.el.div({
+          $header.append($.el.div({
             "class": "toggle"
           }, toggle));
         }
@@ -824,16 +855,16 @@
           var klass, label, _ref, _ref1;
           label = (_ref = attribute.label) != null ? _ref : attribute.field;
           klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
-          return _this.$header.append($.el.div({
+          return $header.append($.el.div({
             "class": klass,
             "data-sort-by": attribute.sortField || attribute.field
           }, label));
         });
-        this.$header.find(".maximize, .minimize").click(function() {
+        $header.find(".maximize, .minimize").click(function() {
           return _this.toggleVisibility();
         });
-        this.$header.find("[data-sort-by=" + this.collection.sortingBy + "]").append(" " + this.sortArrows[1]);
-        return this.$header;
+        $header.find("[data-sort-by=" + this.collection.sortingBy + "]").append(" " + this.sortArrows[1]);
+        return $header;
       };
 
       List.prototype.updateHeader = function() {
@@ -853,11 +884,11 @@
       };
 
       List.prototype.initializeFooter = function() {
-        this.$footer = $($.el.div({
+        var $footer;
+        $footer = $($.el.div({
           "class": "footer"
         }));
-        this.updateFooter();
-        return this.$footer;
+        return $footer;
       };
 
       List.prototype.updateFooter = function() {
