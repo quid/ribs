@@ -535,8 +535,8 @@ do ($=jQuery) ->
                     b = walk_context field, mb.toJSON()
 
                     # make string sorting case insensitive
-                    a = a.toLowerCase() if (a instanceof String)
-                    b = b.toLowerCase() if (b instanceof String)
+                    a = a.toLowerCase() if a.toLowerCase?
+                    b = b.toLowerCase() if b.toLowerCase?
 
                     return  0     if a is b
                     return +1*dir if a > b or not b?
