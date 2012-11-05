@@ -332,16 +332,20 @@ do ($=jQuery) ->
             # and swap out the cell with any passed
             # in element
             if @options.editable
+
                 # default to a text field
                 if @options.editable instanceof Function
-                    editField = $(@options.editable(@renderableValue(true), @model))
+                    editField = $(@options.editable.call(this, @renderableValue(true), @model))
                 else
                     editField = $($.el.input(type: 'text', value: @renderableValue(true)))
-                editField.addClass("editableField")
-                @$el.html(editField)
-                @delegateEvents()
-                editField.focus()
-                @model.editing = true
+
+                # A function may return null if it does its own thing
+                if editField
+                    editField.addClass("editableField")
+                    @$el.html(editField)
+                    @delegateEvents()
+                    editField.focus()
+                    @model.editing = true
 
             return false
 
