@@ -381,18 +381,20 @@
         var editField;
         if (this.options.editable) {
           if (this.options.editable instanceof Function) {
-            editField = $(this.options.editable(this.renderableValue(true), this.model));
+            editField = this.options.editable.call(this, this.renderableValue(true), this.model);
           } else {
-            editField = $($.el.input({
+            editField = $.el.input({
               type: 'text',
               value: this.renderableValue(true)
-            }));
+            });
           }
-          editField.addClass("editableField");
-          this.$el.html(editField);
-          this.delegateEvents();
-          editField.focus();
-          this.model.editing = true;
+          if (editField) {
+            $(editField).addClass("editableField");
+            this.$el.html(editField);
+            this.delegateEvents();
+            $(editField).focus();
+            this.model.editing = true;
+          }
         }
         return false;
       };
@@ -630,10 +632,10 @@
             var a, b;
             a = walk_context(field, ma.toJSON());
             b = walk_context(field, mb.toJSON());
-            if (a instanceof String) {
+            if ((a != null ? a.toLowerCase : void 0) != null) {
               a = a.toLowerCase();
             }
-            if (b instanceof String) {
+            if ((b != null ? b.toLowerCase : void 0) != null) {
               b = b.toLowerCase();
             }
             if (a === b) {
@@ -814,8 +816,10 @@
         var _ref;
         this._subviews = [];
         this.$list.empty();
-        this.collection.trigger("deselected");
-        return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
+        if ((_ref = this.collection) != null) {
+          _ref.each(this.addItem, this);
+        }
+        return this.trigger("rendered");
       };
 
       List.prototype.get = function(id) {

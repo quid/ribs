@@ -679,8 +679,8 @@ do ($=jQuery) ->
         addAllItems : ->
             @_subviews = []
             @$list.empty()
-            @collection.trigger "deselected"
             @collection?.each @addItem, this
+            @trigger "rendered"
 
         # Gets list item view by model ID
         get: (id) ->
