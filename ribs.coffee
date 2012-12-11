@@ -266,12 +266,13 @@ do ($=jQuery) ->
             super()
 
         keypressed : (event) -> 
-            # __<return>__ and __x__ will toggle selection.
-            if event.which in [13, 120] and not @view.suppressToggle
-                @toggle()
-                return
-            if @view.inlineActions.length
-                event.originalEvent.listItem = this
+            unless Ribs._readyToJump or $(document.activeElement).is("input:text, textarea")
+                # __<return>__ and __x__ will toggle selection.
+                if event.which in [13, 120] and not @view.suppressToggle
+                    @toggle()
+                    return
+                if @view.inlineActions.length
+                    event.originalEvent.listItem = this
 
         stealfocus: ->
             @$el.focus()
@@ -516,27 +517,40 @@ do ($=jQuery) ->
         sortByField: (event) ->
             field = $(event.target).attr("data-sort-by")
             if field?
-                @sortCollectionBy field
+                old_field = @sortingBy
+                @sortingDirection ||= {}
+                @sortingBy = field
+
+                if field is old_field and field of @sortingDirection
+                    @sortingDirection[field] *= -1 # toggle direction
+                else
+                    @sortingDirection[field] = 1
+
+                dir = @sortingDirection[field]
+
+                @sortCollection field, dir
+
+                @updateHeaderArrows field, old_field
 			
-        sortCollectionBy: (field) ->
-
-            old_field = @collection.sortingBy
-            @collection.sortingDirection ||= {}
-            @collection.sortingBy = field
-
-            if field is old_field and field of @collection.sortingDirection
-                @collection.sortingDirection[field] *= -1 # toggle direction
-            else
-                @collection.sortingDirection[field] = 1
-
-            dir = @collection.sortingDirection[field]
+        sortCollection: (field, dir) ->
 
             if @collection.remoteSort
                 @collection.trigger 'remoteSort', field, dir
             else
                 @collection.comparator = (ma,mb)=>
-                    a = walk_context field, ma.toJSON()
-                    b = walk_context field, mb.toJSON()
+
+                    # first check if it is a top level attribute
+                    a = ma.get field
+                    a ||= walk_context field, ma.toJSON()
+                    da = @displayAttributeMap[field]
+                    if da.map?
+                        a = da.map a
+
+                    b = mb.get field
+                    b ||= walk_context field, mb.toJSON()
+                    db = @displayAttributeMap[field]
+                    if db.map?
+                        b = db.map b
 
                     # make string sorting case insensitive
                     a = a.toLowerCase() if a?.toLowerCase?
@@ -548,16 +562,13 @@ do ($=jQuery) ->
 
                 @collection.sort()
 
-                @render()
-
-            @updateHeaderArrows field, old_field
 
         updateHeaderArrows : (field, old_field) ->
 
             return unless @collection?
 
             re = new RegExp(" (#{_.values(@sortArrows).join("|")})$|$")
-            dir = @collection.sortingDirection[field] ? 1
+            dir = @sortingDirection[field] ? 1
             
             # Remove arrows from previously sorted label.
             if old_field?
@@ -700,12 +711,12 @@ do ($=jQuery) ->
                 $(toggle).attr("checked", "checked") if @selectedByDefault
                 $header.append $.el.div({class:"toggle"}, toggle)
 
-            if @displayAttributes?
-                attributes = @displayAttributes
-            else
+            unless @displayAttributes?
                 attributes = _.map @collection.first().toJSON(), (v,k) -> 
                     { field: k }
-            _.each attributes, (attribute) =>
+            @displayAttributeMap = {}
+            _.each @displayAttributes, (attribute) =>
+                @displayAttributeMap[attribute.field] = attribute
                 label = attribute.label ? attribute.field
                 klass = attribute.class ? attribute.field
                 $header.append $.el.div(
@@ -718,9 +729,10 @@ do ($=jQuery) ->
                 @toggleVisibility()
 
             # put arrow on default sorted by
-            $header.find("[data-sort-by=#{@collection.sortingBy}]").append(" #{@sortArrows[1]}")
+            $header.find("[data-sort-by=#{@sortingBy}]").append(" #{@sortArrows[1]}")
 
             $header
+
 
         updateHeader: ->
             n = @getNumSelected()

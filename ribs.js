@@ -304,12 +304,14 @@
 
       ListItem.prototype.keypressed = function(event) {
         var _ref;
-        if (((_ref = event.which) === 13 || _ref === 120) && !this.view.suppressToggle) {
-          this.toggle();
-          return;
-        }
-        if (this.view.inlineActions.length) {
-          return event.originalEvent.listItem = this;
+        if (!(Ribs._readyToJump || $(document.activeElement).is("input:text, textarea"))) {
+          if (((_ref = event.which) === 13 || _ref === 120) && !this.view.suppressToggle) {
+            this.toggle();
+            return;
+          }
+          if (this.view.inlineActions.length) {
+            return event.originalEvent.listItem = this;
+          }
         }
       };
 
@@ -606,32 +608,42 @@
       };
 
       List.prototype.sortByField = function(event) {
-        var field;
+        var dir, field, old_field;
         field = $(event.target).attr("data-sort-by");
         if (field != null) {
-          return this.sortCollectionBy(field);
+          old_field = this.sortingBy;
+          this.sortingDirection || (this.sortingDirection = {});
+          this.sortingBy = field;
+          if (field === old_field && field in this.sortingDirection) {
+            this.sortingDirection[field] *= -1;
+          } else {
+            this.sortingDirection[field] = 1;
+          }
+          dir = this.sortingDirection[field];
+          this.sortCollection(field, dir);
+          return this.updateHeaderArrows(field, old_field);
         }
       };
 
-      List.prototype.sortCollectionBy = function(field) {
-        var dir, old_field, _base,
-          _this = this;
-        old_field = this.collection.sortingBy;
-        (_base = this.collection).sortingDirection || (_base.sortingDirection = {});
-        this.collection.sortingBy = field;
-        if (field === old_field && field in this.collection.sortingDirection) {
-          this.collection.sortingDirection[field] *= -1;
-        } else {
-          this.collection.sortingDirection[field] = 1;
-        }
-        dir = this.collection.sortingDirection[field];
+      List.prototype.sortCollection = function(field, dir) {
+        var _this = this;
         if (this.collection.remoteSort) {
-          this.collection.trigger('remoteSort', field, dir);
+          return this.collection.trigger('remoteSort', field, dir);
         } else {
           this.collection.comparator = function(ma, mb) {
-            var a, b;
-            a = walk_context(field, ma.toJSON());
-            b = walk_context(field, mb.toJSON());
+            var a, b, da, db;
+            a = ma.get(field);
+            a || (a = walk_context(field, ma.toJSON()));
+            da = _this.displayAttributeMap[field];
+            if (da.map != null) {
+              a = da.map(a);
+            }
+            b = mb.get(field);
+            b || (b = walk_context(field, mb.toJSON()));
+            db = _this.displayAttributeMap[field];
+            if (db.map != null) {
+              b = db.map(b);
+            }
             if ((a != null ? a.toLowerCase : void 0) != null) {
               a = a.toLowerCase();
             }
@@ -648,10 +660,8 @@
               return -1 * dir;
             }
           };
-          this.collection.sort();
-          this.render();
+          return this.collection.sort();
         }
-        return this.updateHeaderArrows(field, old_field);
       };
 
       List.prototype.updateHeaderArrows = function(field, old_field) {
@@ -660,7 +670,7 @@
           return;
         }
         re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
-        dir = (_ref = this.collection.sortingDirection[field]) != null ? _ref : 1;
+        dir = (_ref = this.sortingDirection[field]) != null ? _ref : 1;
         if (old_field != null) {
           old_el = this.$header.find("[data-sort-by='" + old_field + "']");
           old_label = (_ref1 = old_el.html()) != null ? _ref1.replace(re, "") : void 0;
@@ -852,17 +862,17 @@
             "class": "toggle"
           }, toggle));
         }
-        if (this.displayAttributes != null) {
-          attributes = this.displayAttributes;
-        } else {
+        if (this.displayAttributes == null) {
           attributes = _.map(this.collection.first().toJSON(), function(v, k) {
             return {
               field: k
             };
           });
         }
-        _.each(attributes, function(attribute) {
+        this.displayAttributeMap = {};
+        _.each(this.displayAttributes, function(attribute) {
           var klass, label, _ref, _ref1;
+          _this.displayAttributeMap[attribute.field] = attribute;
           label = (_ref = attribute.label) != null ? _ref : attribute.field;
           klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
           return $header.append($.el.div({
@@ -873,7 +883,7 @@
         $header.find(".maximize, .minimize").click(function() {
           return _this.toggleVisibility();
         });
-        $header.find("[data-sort-by=" + this.collection.sortingBy + "]").append(" " + this.sortArrows[1]);
+        $header.find("[data-sort-by=" + this.sortingBy + "]").append(" " + this.sortArrows[1]);
         return $header;
       };
 
