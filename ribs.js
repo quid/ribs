@@ -3,431 +3,12 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   (function($) {
-    var walk_context;
-    window.Ribs = {};
-    Ribs._boundJumpKeys = {};
-    Ribs._jumpPrefixKey = "g";
-    Ribs._jumpTimeout = 1000;
-    Ribs._poiseJump = function() {
-      Ribs._readyToJump = true;
-      clearTimeout(Ribs._jumpInterval);
-      return Ribs._jumpInterval = setTimeout(function() {
-        return Ribs._readyToJump = false;
-      }, Ribs._jumpTimeout);
-    };
-    Ribs._makeJump = function(charcode) {
-      var bindings;
-      Ribs._readyToJump = false;
-      clearTimeout(Ribs._jumpTimeout);
-      bindings = Ribs._boundJumpKeys[charcode];
-      if ((bindings != null) && bindings.length > 0) {
-        return _.each(bindings, function(binding) {
-          if (!((binding.el != null) && $(binding.el).is(":hidden"))) {
-            return binding.fn.apply(binding.ctx);
-          }
-        });
-      }
-    };
-    Ribs.bindJumpKey = function(label, key, fn, ctx, el) {
-      var charCode, _base;
-      charCode = key.charCodeAt(0);
-      if (!(el != null) && ctx instanceof Backbone.View) {
-        el = ctx.el;
-      }
-      (_base = Ribs._boundJumpKeys)[charCode] || (_base[charCode] = []);
-      Ribs._boundJumpKeys[charCode].push({
-        label: label,
-        fn: fn,
-        ctx: ctx,
-        el: el,
-        key: key
-      });
-      return charCode;
-    };
-    Ribs.unbindJumpKey = function(key, ctx) {
-      var charCode;
-      charCode = key.charCodeAt(0);
-      return _.each(Ribs._boundJumpKeys[charCode], function(binding, i) {
-        if (binding.ctx === ctx) {
-          Ribs._boundJumpKeys[charCode].splice(i, 1);
-          if (Ribs._boundJumpKeys[charCode].length === 0) {
-            return delete Ribs._boundJumpKeys[charCode];
-          }
-        }
-      });
-    };
-    Ribs._registeredListViews = {};
-    Ribs.showKeyboardBindings = function() {
-      var className, keys, overlay, ul;
-      className = "ribs-keyboard-shortcuts-overlay";
-      $("." + className).remove();
-      overlay = $.el.div({
-        "class": className
-      });
-      ul = $.el.ul();
-      $(overlay).append($.el.h1("Navigation"), ul);
-      _.each(_.flatten(Ribs._boundJumpKeys), function(binding) {
-        var li;
-        if (!(binding.el && $(binding.el).is(":hidden"))) {
-          li = $.el.li({
-            "class": "hotkey"
-          }, $.el.span({
-            "class": "jump key"
-          }, "g" + binding.key), $.el.span({
-            "class": "action"
-          }, "Go to " + binding.label));
-          return $(ul).append(li);
-        }
-      });
-      keys = [
-        {
-          key: "?",
-          label: "Open this page"
-        }, {
-          key: "j",
-          label: "Next item"
-        }, {
-          key: "J",
-          label: "Last item"
-        }, {
-          key: "k",
-          label: "Previous item"
-        }, {
-          key: "K",
-          label: "First item"
-        }, {
-          key: "x",
-          label: "Select/deselect item"
-        }, {
-          key: "X",
-          label: "Select/deselect all"
-        }, {
-          key: "_",
-          label: "Expand/collapse list"
-        }, {
-          key: "R",
-          label: "Refresh items"
-        }
-      ];
-      _.each(keys, function(binding) {
-        var li;
-        li = $.el.li({
-          "class": "hotkey"
-        }, $.el.span({
-          "class": "key"
-        }, binding.key), $.el.span({
-          "class": "action"
-        }, binding.label));
-        return $(ul).append(li);
-      });
-      _.each(Ribs._registeredListViews, function(view) {
-        var h1;
-        if (!$(view.el).is(":hidden")) {
-          h1 = $.el.h1(view.plural());
-          ul = $.el.ul();
-          $(overlay).append(h1, ul);
-          return _.each(view.actions, function(action) {
-            var li;
-            if (action.hotkey != null) {
-              li = $.el.li({
-                "class": "hotkey"
-              }, $.el.span({
-                "class": "key"
-              }, action.hotkey), $.el.span({
-                "class": "action"
-              }, action.label));
-              return $(ul).append(li);
-            }
-          });
-        }
-      });
-      $(overlay).bind('click', function() {
-        $(overlay).remove();
-        return false;
-      });
-      $(window).bind('keyup', function(event) {
-        if (event.which === 27) {
-          $(overlay).remove();
-        }
-        return false;
-      });
-      $("body").append(overlay);
-      return overlay;
-    };
-    $(window).on("keypress", function(event) {
-      var prefix;
-      if (!$(document.activeElement).is("input:text, textarea")) {
-        prefix = Ribs._jumpPrefixKey.charCodeAt(0);
-        if (event.which === prefix && !Ribs._readyToJump) {
-          return Ribs._poiseJump();
-        } else if (Ribs._readyToJump) {
-          return Ribs._makeJump(event.which);
-        } else if (event.which === 63) {
-          return Ribs.showKeyboardBindings();
-        }
-      }
-    });
-    Ribs.ListItem = (function(_super) {
-
-      __extends(ListItem, _super);
-
-      ListItem.prototype.tagName = "li";
-
-      ListItem.prototype.className = "item";
-
-      ListItem.prototype.attributes = {
-        tabindex: 0
-      };
-
-      ListItem.prototype._ribsEvents = {
-        'click': 'toggle',
-        'toggle': 'toggle',
-        'select': 'select',
-        'deselect': 'deselect',
-        'click a': 'stopPropogation',
-        'keypress': 'keypressed'
-      };
-
-      function ListItem(options) {
-        var _this = this;
-        this.events || (this.events = {});
-        _.extend(this.events, this._ribsEvents);
-        this.view = options != null ? options.view : void 0;
-        this.listItemCells = [];
-        _.each(this.view.displayAttributes, function(attribute) {
-          attribute = _.clone(attribute);
-          attribute.view = _this;
-          attribute.model = options.model;
-          return _this.listItemCells.push(new Ribs.ListItemCell(attribute));
-        });
-        ListItem.__super__.constructor.call(this, options);
-        if (this.model != null) {
-          this.model.on('change', this.render, this);
-          this.model.on('remove', this.remove, this);
-          this.model.on('stealfocus', this.stealfocus, this);
-        }
-      }
-
-      ListItem.prototype.render = function() {
-        var obj, toggle,
-          _this = this;
-        this.$el.empty();
-        if (!this.model) {
-          return;
-        }
-        this.$el.data("cid", this.model.cid);
-        if (!this.view.suppressToggle) {
-          toggle = $.el.input({
-            type: "checkbox",
-            tabindex: -1
-          });
-          if (this.$el.is(".selected")) {
-            $(toggle).attr("checked", true);
-          }
-          this.$el.append($.el.div({
-            "class": "toggle"
-          }, toggle));
-        }
-        _.each(this.listItemCells, function(cell) {
-          cell.render();
-          cell.delegateEvents();
-          return _this.$el.append(cell.el);
-        });
-        obj = this.model.toJSON();
-        return _.each(this.view.inlineActions, function(action, key) {
-          if (!((action.filter != null) && action.filter(_this.model) === false)) {
-            return _this.$el.append(action.renderInline(_this));
-          }
-        });
-      };
-
-      ListItem.prototype.toggle = function() {
-        if (!(this.$el.is(".disabled") || this.view.suppressToggle)) {
-          if (this.$el.is(".selected")) {
-            return this.deselect();
-          } else {
-            return this.select();
-          }
-        }
-      };
-
-      ListItem.prototype.stopPropogation = function(e) {
-        return e.stopImmediatePropagation();
-      };
-
-      ListItem.prototype.select = function(event, options) {
-        if (options == null) {
-          options = {};
-        }
-        if (this.view.suppressToggle) {
-          return;
-        }
-        this.$el.addClass("selected");
-        this.$el.find("input:checkbox").attr("checked", "checked");
-        if (!options.silent) {
-          return this.model.trigger("selected");
-        }
-      };
-
-      ListItem.prototype.deselect = function(event, options) {
-        if (options == null) {
-          options = {};
-        }
-        if (this.view.suppressToggle) {
-          return;
-        }
-        this.$el.removeClass("selected");
-        this.$el.find("input:checkbox").removeAttr("checked");
-        if (!options.silent) {
-          return this.model.trigger("deselected");
-        }
-      };
-
-      ListItem.prototype.enable = function() {
-        this.$el.removeClass("disabled");
-        this.$el.find("input:checkbox").removeAttr("disabled");
-        this.$el.attr("tabindex", 0);
-        return this.model.trigger("enabled");
-      };
-
-      ListItem.prototype.disable = function() {
-        this.$el.addClass("disabled");
-        this.$el.find("input:checkbox").attr("disabled", "disabled");
-        this.$el.attr("tabindex", -1);
-        return this.model.trigger("disabled");
-      };
-
-      ListItem.prototype.remove = function() {
-        this.deselect();
-        return ListItem.__super__.remove.call(this);
-      };
-
-      ListItem.prototype.keypressed = function(event) {
-        var _ref;
-        if (!(Ribs._readyToJump || $(document.activeElement).is("input:text, textarea"))) {
-          if (((_ref = event.which) === 13 || _ref === 120) && !this.view.suppressToggle) {
-            this.toggle();
-            return;
-          }
-          if (this.view.inlineActions.length) {
-            return event.originalEvent.listItem = this;
-          }
-        }
-      };
-
-      ListItem.prototype.stealfocus = function() {
-        return this.$el.focus();
-      };
-
-      return ListItem;
-
-    })(Backbone.View);
-    Ribs.ListItemCell = (function(_super) {
-
-      __extends(ListItemCell, _super);
-
-      ListItemCell.prototype.tagName = "div";
-
-      ListItemCell.prototype.className = "cell";
-
-      ListItemCell.prototype._ribsEvents = {
-        'click .edit': 'edit',
-        'blur .editableField': 'saveEditedField'
-      };
-
-      function ListItemCell(options) {
-        var _ref;
-        this.events || (this.events = {});
-        _.extend(this.events, this._ribsEvents);
-        _.extend(this, options);
-        ListItemCell.__super__.constructor.call(this, options);
-        this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
-        this.model.on("change change:" + this.options.field, this.render, this);
-      }
-
-      ListItemCell.prototype.renderableValue = function(nomap) {
-        var value;
-        value = this.model.get(this.options.field);
-        value || (value = walk_context(this.options.field, this.model.toJSON()));
-        if ((this.options.map != null) && !nomap) {
-          value = this.options.map(value, this.model, this.$el);
-        }
-        return value;
-      };
-
-      ListItemCell.prototype.render = function() {
-        var editableEl, label, _ref, _ref1;
-        this.$el.empty();
-        if (this.options.escape) {
-          this.$el.text(this.renderableValue());
-        } else {
-          this.$el.html(this.renderableValue());
-        }
-        if (this.editable) {
-          label = (_ref = this.options.label) != null ? _ref : this.options.field;
-          editableEl = $.el.span({
-            "class": 'edit button inline',
-            title: "Edit " + label
-          }, '✎');
-          if ((_ref1 = this.model.get(this.options.field)) === null || _ref1 === '') {
-            $(editableEl).addClass('show');
-          } else {
-            $(editableEl).removeClass('show');
-          }
-          this.$el.append(editableEl);
-        }
-        return this;
-      };
-
-      ListItemCell.prototype.edit = function() {
-        var editField;
-        if (this.options.editable) {
-          if (this.options.editable instanceof Function) {
-            editField = this.options.editable.call(this, this.renderableValue(true), this.model);
-          } else {
-            editField = $.el.input({
-              type: 'text',
-              value: this.renderableValue(true)
-            });
-          }
-          if (editField) {
-            $(editField).addClass("editableField");
-            this.$el.html(editField);
-            this.delegateEvents();
-            $(editField).focus();
-            this.model.editing = true;
-          }
-        }
-        return false;
-      };
-
-      ListItemCell.prototype.saveEditedField = function(e) {
-        var changeSet, field;
-        field = $(e.target);
-        changeSet = {};
-        changeSet[this.options.field] = field.val();
-        this.model.changeSet = changeSet;
-        try {
-          this.model.save(changeSet, {
-            wait: true
-          });
-        } catch (e) {
-          this.render();
-        }
-        if (!this.model.hasChanged()) {
-          this.model.trigger("change:" + this.options.field);
-        }
-        return this.model.editing = false;
-      };
-
-      return ListItemCell;
-
-    })(Backbone.View);
+    var root;
+    root = typeof window !== "undefined" && window !== null ? window : module.exports;
+    root.Ribs = {};
     Ribs.List = (function(_super) {
 
       __extends(List, _super);
-
-      List.prototype.itemView = Ribs.ListItem;
 
       List.prototype.tagName = "div";
 
@@ -455,46 +36,44 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var key,
-          _this = this;
+        var l, t, _i, _len, _ref, _ref1;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
         this.className || (this.className = "");
         this.className += " ribs";
+        if ((_ref = this.itemView) == null) {
+          this.itemView = Ribs.ListItem;
+        }
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
         _.extend(this, options);
-        key = _.uniqueId('ribs_view_');
-        Ribs._registeredListViews[key] = this;
-        this.components = [];
-        _.each(this.renderOrder, function(t) {
-          var l;
-          l = t.replace(/^./, "$" + (t[0].toLowerCase()));
-          if (!_this["suppress" + t]) {
-            _this[l] = _this["initialize" + t]();
-          }
-          if (l in _this) {
-            return _this.components.push(_this[l]);
-          }
-        });
         List.__super__.constructor.call(this, options);
-        if (this.jumpkey != null) {
-          Ribs.bindJumpKey(this.plural(), this.jumpkey, function() {
-            return this.$el.find(this.jumpSelector).focus();
-          }, this);
+        this.initializeHotKeys();
+        this.components = [];
+        _ref1 = this.renderOrder;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          t = _ref1[_i];
+          l = t.replace(/^./, "$" + (t[0].toLowerCase()));
+          if (!this["suppress" + t]) {
+            this[l] = this["initialize" + t]();
+          }
+          if (l in this) {
+            this.components.push(this[l]);
+          }
         }
-        this.on('refresh', this.refresh);
         this.$el.addClass('ribs');
         this.build();
       }
 
       List.prototype.build = function() {
-        var _this = this;
+        var t, _i, _len, _ref;
         this.$el.empty();
-        _.each(this.components, function(t) {
-          return _this.$el.append(t);
-        });
+        _ref = this.components;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          t = _ref[_i];
+          this.$el.append(t);
+        }
         this._subviews = [];
         if (this.collection != null) {
           return this.setCollection(this.collection);
@@ -502,9 +81,12 @@
       };
 
       List.prototype.render = function() {
-        _.each(this._subviews, function(view, i) {
-          return view.render();
-        });
+        var i, view, _i, _len, _ref;
+        _ref = this._subviews;
+        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+          view = _ref[i];
+          view.render();
+        }
         if (this.$footer) {
           this.updateFooter;
         }
@@ -514,13 +96,15 @@
       };
 
       List.prototype.setCollection = function(collection) {
-        var _this = this;
+        var action, _i, _len, _ref;
         this.collection = collection;
-        _.each(this.allActions, function(action) {
+        _ref = this.allActions;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          action = _ref[_i];
           if (action != null) {
-            return action.setCollection(_this.collection);
+            action.setCollection(this.collection);
           }
-        });
+        }
         this.collection.off("selected deselected reset add remove", null, this);
         this.collection.on("add", this.addItem, this);
         this.collection.on("reset", this.addAllItems, this);
@@ -539,7 +123,7 @@
           return [];
         }
         return this.$list.find(".item.selected").map(function(idx, el) {
-          return _this.collection.getByCid($(el).data("cid"));
+          return _this.collection.get($(el).data("cid"));
         });
       };
 
@@ -549,7 +133,7 @@
           return [];
         }
         return this.$list.find(".item:not(.selected)").map(function(idx, el) {
-          return _this.collection.getByCid($(el).data("cid"));
+          return _this.collection.get($(el).data("cid"));
         });
       };
 
@@ -574,7 +158,13 @@
         return this.collection.length;
       };
 
-      List.prototype.toggleSelected = function(event) {
+      List.prototype.toggleFocussedSelected = function() {
+        if (!this.suppressToggle) {
+          return this.$(".item:focus").trigger("toggle");
+        }
+      };
+
+      List.prototype.toggleSelected = function() {
         var _ref, _ref1;
         if (this.selectedByDefault === true) {
           this.$list.find(".item.selected").trigger("deselect", {
@@ -633,13 +223,11 @@
           this.collection.comparator = function(ma, mb) {
             var a, b, da, db;
             a = ma.get(field);
-            a || (a = walk_context(field, ma.toJSON()));
             da = _this.displayAttributeMap[field];
             if (da.map != null) {
               a = da.map(a);
             }
             b = mb.get(field);
-            b || (b = walk_context(field, mb.toJSON()));
             db = _this.displayAttributeMap[field];
             if (db.map != null) {
               b = db.map(b);
@@ -681,32 +269,96 @@
         return $(el).html(label);
       };
 
-      List.prototype.keypressed = function(event) {
-        if (!(Ribs._readyToJump || $(document.activeElement).is("input:text, textarea"))) {
-          if (event.which === 106) {
-            return $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus();
-          } else if (event.which === 107) {
-            return $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus();
-          } else if (event.which === 74) {
-            return this.$list.find(".item:last").focus();
-          } else if (event.which === 75) {
-            return this.$list.find(".item:first").focus();
-          } else if (event.which === 95) {
-            return this.toggleVisibility();
-          } else if (event.which === 88) {
-            return this.toggleSelected();
-          } else if (event.which === 82) {
-            this.collection.trigger('before:refresh');
-            return this.trigger('refresh');
-          } else {
-            return this.trigger("keypressed", event);
-          }
+      List.prototype.initializeHotKeys = function() {
+        var hotkey, hotkeys, _base, _i, _len, _ref, _results,
+          _this = this;
+        if ((_ref = (_base = this.constructor).keyboardManager) == null) {
+          _base.keyboardManager = new Ribs.KeyboardManager();
         }
+        this.keyboardManager = this.constructor.keyboardManager;
+        this.keyboardNamespace = this.keyboardManager.registerView(this, this.plural());
+        if (this.jumpkey != null) {
+          this.keyboardManager.registerJumpKey({
+            label: this.plural(),
+            jumpkey: this.jumpkey,
+            context: this,
+            callback: function() {
+              return _this.$(_this.jumpSelector).focus();
+            },
+            precondition: function() {
+              return _this.$el.is(":visible");
+            }
+          });
+        }
+        hotkeys = [
+          {
+            hotkey: "j",
+            label: "Focus next item",
+            callback: function() {
+              return $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus();
+            }
+          }, {
+            hotkey: "J",
+            label: "Focus last item",
+            callback: function() {
+              return _this.$list.find(".item:last").focus();
+            }
+          }, {
+            hotkey: "k",
+            label: "Focus previous item",
+            callback: function() {
+              return $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus();
+            }
+          }, {
+            hotkey: "K",
+            label: "Focus first item",
+            callback: function() {
+              return _this.$list.find(".item:first").focus();
+            }
+          }, {
+            hotkey: "x",
+            label: "Select/deselect item",
+            callback: function() {
+              return _this.toggleFocussedSelected();
+            }
+          }, {
+            hotkey: "X",
+            label: "Select/deselect all",
+            callback: function() {
+              return _this.toggleSelected();
+            }
+          }, {
+            hotkey: "_",
+            label: "Expand/collapse list",
+            callback: function() {
+              return _this.toggleVisibility();
+            }
+          }, {
+            hotkey: "R",
+            label: "Refresh items",
+            callback: function() {
+              return _this.refresh();
+            }
+          }
+        ];
+        _results = [];
+        for (_i = 0, _len = hotkeys.length; _i < _len; _i++) {
+          hotkey = hotkeys[_i];
+          hotkey.namespace = this.keyboardNamespace;
+          _results.push(this.keyboardManager.registerHotKey(hotkey));
+        }
+        return _results;
+      };
+
+      List.prototype.keypressed = function(event) {
+        this.trigger("keypressed", event);
+        return this.keyboardManager.handleKeypress(event, this.keyboardNamespace);
       };
 
       List.prototype.refresh = function() {
         var _this = this;
         if (this.collection.url != null) {
+          this.trigger('refresh');
           return this.collection.fetch({
             success: function() {
               var _ref;
@@ -730,7 +382,7 @@
         if (this.focussed) {
           return setTimeout(function() {
             var _ref;
-            if (_this.$el.find(document.activeElement).length === 0) {
+            if (_this.$(document.activeElement).length === 0) {
               _this.$el.removeClass("focussed");
             }
             _this.focussed = false;
@@ -769,16 +421,28 @@
           var action;
           actionConfig.collection = _this.collection;
           actionConfig.view = _this;
-          action = new Ribs.Action(actionConfig);
-          if (action.inline) {
-            _this.inlineActions.push(action);
+          if (actionConfig.inline) {
+            _this.inlineActions.push(actionConfig);
           }
-          if (action.batch !== false) {
+          if (actionConfig.batch !== false) {
+            action = new Ribs.Action(actionConfig);
             _this.batchActions.push(action);
+            _this.allActions.push(action);
             action.render();
             $batchActions.append(action.el);
           }
-          return _this.allActions.push(action);
+          if (actionConfig.hotkey) {
+            return _this.keyboardManager.registerHotKey({
+              hotkey: actionConfig.hotkey,
+              label: actionConfig.label,
+              namespace: _this.keyboardNamespace,
+              context: actionConfig,
+              precondition: actionConfig.allowed,
+              callback: function() {
+                return actionConfig.activate.call(_this, _this.getSelected());
+              }
+            });
+          }
         });
         if (this.batchActions.length) {
           return $batchActions;
@@ -930,34 +594,33 @@
       Action.prototype.className = "action";
 
       Action.prototype._ribsEvents = {
-        'click': 'triggerAction',
-        'keypress': 'keypressedHere'
+        'click': 'activate',
+        'keypress': 'keypressed'
       };
 
       function Action(options) {
-        this.min = 1;
-        this.max = -1;
-        this.arity = null;
-        this.check = null;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
-        _.extend(this, options);
         Action.__super__.constructor.call(this, options);
+        this.options = _.extend({
+          min: 1,
+          max: -1,
+          arity: null,
+          check: null
+        }, options);
+        this.view = options.view;
         if (this.collection != null) {
           this.setCollection(this.collection);
         }
-        if (this.hotkey != null) {
-          this.view.on("keypressed", this.keypressedOnView, this);
-        }
-        this.checkRequirements();
       }
 
       Action.prototype.setCollection = function(collection) {
         if (collection != null) {
           this.collection = collection;
           this.collection.off("selected deselected reset", null, this);
-          return this.collection.on("selected deselected reset", this.checkRequirements, this);
+          this.collection.on("selected deselected reset", this.checkRequirements, this);
         }
+        return this.checkRequirements();
       };
 
       Action.prototype.checkRequirements = function() {
@@ -971,120 +634,70 @@
         }
       };
 
-      Action.prototype.allowed = function(l) {
-        var a, allow, r1, r2, r3;
-        l || (l = this.view.getNumSelected());
+      Action.prototype.allowed = function() {
+        var a, allow, l, r1, r2, r3;
+        l = this.getNumSelected();
         allow = false;
-        if (this.arity != null) {
-          a = this.arity;
+        if (this.options.arity != null) {
+          a = this.options.arity;
           r1 = a === l;
           r2 = a === -1;
           r3 = !!(a % 1) && l >= Math.floor(a);
           allow = r1 || r2 || r3;
         } else {
-          r1 = this.min === -1 || l >= this.min;
-          r2 = this.max === -1 || l <= this.max;
+          r1 = this.options.min === -1 || l >= this.options.min;
+          r2 = this.options.max === -1 || l <= this.options.max;
           allow = r1 && r2;
         }
-        if (allow && (this.check != null)) {
-          allow = this.check.apply(this.view, [this.view.getSelected()]);
+        if (allow && (this.options.check != null)) {
+          allow = this.options.check.apply(this.view, [this.getSelected()]);
         }
         return allow;
       };
 
+      Action.prototype.getSelected = function() {
+        return this.view.getSelected();
+      };
+
+      Action.prototype.getNumSelected = function() {
+        return this.view.getNumSelected();
+      };
+
       Action.prototype.disable = function() {
         this.$el.addClass("disabled");
-        return this.$el.find(".button").attr("tabindex", -1);
+        return this.$(".button").attr("tabindex", -1);
       };
 
       Action.prototype.enable = function() {
         this.$el.removeClass("disabled");
-        return this.$el.find(".button").attr("tabindex", 0);
-      };
-
-      Action.prototype.triggerAction = function(event, listItem) {
-        if (!this.$el.is(".disabled") && this.allowed()) {
-          return this.activate.call(this.view, this.view.getSelected(), listItem);
-        }
-      };
-
-      Action.prototype.triggerActionInline = function(event, listItem) {
-        if (!listItem.$el.is(".disabled")) {
-          return this.activate.call(this.view, [listItem.model], listItem);
-        }
-      };
-
-      Action.prototype.keypressedHere = function(event) {
-        if (event.which === 13) {
-          this.triggerAction(event);
-          return false;
-        }
-        return true;
-      };
-
-      Action.prototype.keypressedOnView = function(event) {
-        var listItem;
-        if ((this.hotkey != null) && this.hotkey.charCodeAt(0) === event.which) {
-          listItem = event.originalEvent.listItem;
-          if ((listItem != null) && (this.inline != null)) {
-            this.triggerActionInline(event, listItem);
-          } else {
-            this.triggerAction(event, listItem);
-          }
-          return false;
-        }
+        return this.$(".button").attr("tabindex", 0);
       };
 
       Action.prototype.render = function() {
-        return this.$el.html(this.drawButton());
-      };
-
-      Action.prototype.drawButton = function(inline, listItem) {
-        var btn, label, tabindex, _ref, _ref1;
-        if (inline == null) {
-          inline = false;
+        var btn, label, tabindex, _ref;
+        label = (_ref = this.options.batchLabel) != null ? _ref : this.options.label;
+        if (this.options.hotkey != null) {
+          label = this.constructor.highlightHotkey(label, this.options.hotkey);
         }
-        if (inline || !this.$el.is(".disabled")) {
-          tabindex = 0;
-        } else {
-          tabindex = -1;
-        }
+        tabindex = this.$el.is(".disabled") ? -1 : 0;
         btn = $.el.div({
           "class": "button",
-          tabindex: tabindex
+          tabindex: tabindex,
+          title: this.options.label
         });
-        if (inline) {
-          label = (_ref = this.inlineLabel) != null ? _ref : this.label;
-          if ((listItem != null) && label instanceof Function) {
-            label = label.call(this, listItem.model);
-          }
-        } else {
-          label = (_ref1 = this.batchLabel) != null ? _ref1 : this.label;
-          if (this.hotkey != null) {
-            label = this.constructor.highlightHotkey(label, this.hotkey);
-          }
-        }
         $(btn).html(label);
-        $(btn).attr("title", this.label);
-        return $(btn);
+        return this.$el.html(btn);
       };
 
-      Action.prototype.renderInline = function(listItem) {
-        var btn,
-          _this = this;
-        btn = this.drawButton(true, listItem);
-        btn.addClass("inline");
-        $(btn).on("click", function(event) {
-          _this.triggerActionInline(event, listItem);
+      Action.prototype.activate = function() {
+        return this.options.activate.call(this.view, this.getSelected());
+      };
+
+      Action.prototype.keypressed = function(event) {
+        if (event.which === 13) {
+          this.activate();
           return false;
-        });
-        $(btn).on("keypress", function(event) {
-          if (event.which === 13) {
-            _this.triggerActionInline(event, listItem);
-            return false;
-          }
-        });
-        return btn;
+        }
       };
 
       Action.highlightHotkey = function(label, hotkey) {
@@ -1100,19 +713,502 @@
       return Action;
 
     })(Backbone.View);
-    return walk_context = function(name, context) {
-      var path, value;
-      path = name.split(".");
-      value = context[path.shift()];
-      while ((value != null) && path.length > 0) {
-        context = value;
-        value = context[path.shift()];
+    Ribs.InlineAction = (function(_super) {
+
+      __extends(InlineAction, _super);
+
+      function InlineAction() {
+        return InlineAction.__super__.constructor.apply(this, arguments);
       }
-      if (typeof value === "function") {
-        return value.apply(context);
+
+      InlineAction.prototype.getSelected = function() {
+        var _ref;
+        return [(_ref = this.options.listItem) != null ? _ref.model : void 0];
+      };
+
+      InlineAction.prototype.getNumSelected = function() {
+        return 1;
+      };
+
+      InlineAction.prototype.render = function() {
+        var btn, label, tabindex, _ref;
+        tabindex = 0;
+        label = (_ref = this.options.inlineLabel) != null ? _ref : this.options.label;
+        if (label instanceof Function) {
+          label = label.call(this, this.options.listItem.model);
+        }
+        btn = $.el.div({
+          "class": "inline button",
+          tabindex: tabindex,
+          title: this.label
+        }, label);
+        return this.$el.html(btn);
+      };
+
+      return InlineAction;
+
+    })(Ribs.Action);
+    Ribs.ListItem = (function(_super) {
+
+      __extends(ListItem, _super);
+
+      ListItem.prototype.tagName = "li";
+
+      ListItem.prototype.className = "item";
+
+      ListItem.prototype.attributes = {
+        tabindex: 0
+      };
+
+      ListItem.prototype._ribsEvents = {
+        'click': 'toggle',
+        'toggle': 'toggle',
+        'select': 'select',
+        'deselect': 'deselect',
+        'click a': 'stopPropogation'
+      };
+
+      function ListItem(options) {
+        var attribute, _i, _len, _ref;
+        this.events || (this.events = {});
+        _.extend(this.events, this._ribsEvents);
+        this.view = options != null ? options.view : void 0;
+        this.listItemCells = [];
+        _ref = this.view.displayAttributes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          attribute = _ref[_i];
+          attribute = _.clone(attribute);
+          attribute.view = this;
+          attribute.model = options.model;
+          this.listItemCells.push(new Ribs.ListItemCell(attribute));
+        }
+        ListItem.__super__.constructor.call(this, options);
+        if (this.model != null) {
+          this.model.on('change', this.render, this);
+          this.model.on('remove', this.remove, this);
+          this.model.on('stealfocus', this.stealfocus, this);
+        }
       }
-      return value;
-    };
+
+      ListItem.prototype.render = function() {
+        var action, cell, inlineAction, key, obj, options, toggle, ul, _i, _len, _ref, _ref1;
+        this.$el.empty();
+        if (!this.model) {
+          return;
+        }
+        this.$el.data("cid", this.model.cid);
+        if (!this.view.suppressToggle) {
+          toggle = $.el.input({
+            type: "checkbox",
+            tabindex: -1
+          });
+          if (this.$el.is(".selected")) {
+            $(toggle).attr("checked", true);
+          }
+          this.$el.append($.el.div({
+            "class": "toggle"
+          }, toggle));
+        }
+        _ref = this.listItemCells;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          cell = _ref[_i];
+          cell.render();
+          cell.delegateEvents();
+          this.$el.append(cell.el);
+        }
+        obj = this.model.toJSON();
+        ul = $.el.ul({
+          "class": "actions"
+        });
+        _ref1 = this.view.inlineActions;
+        for (key in _ref1) {
+          action = _ref1[key];
+          if (!((action.filter != null) && action.filter(this.model) === false)) {
+            options = _.extend(action, {
+              listItem: this
+            });
+            inlineAction = new Ribs.InlineAction(options);
+            inlineAction.render();
+            $(ul).append(inlineAction.el);
+          }
+        }
+        return this.$el.append(ul);
+      };
+
+      ListItem.prototype.toggle = function() {
+        if (!this.$el.is(".disabled")) {
+          if (this.$el.is(".selected")) {
+            return this.deselect();
+          } else {
+            return this.select();
+          }
+        }
+      };
+
+      ListItem.prototype.stopPropogation = function(e) {
+        return e.stopImmediatePropagation();
+      };
+
+      ListItem.prototype.select = function(event, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (this.view.suppressToggle) {
+          return;
+        }
+        this.$el.addClass("selected");
+        this.$("input:checkbox").attr("checked", "checked");
+        if (!options.silent) {
+          return this.model.trigger("selected");
+        }
+      };
+
+      ListItem.prototype.deselect = function(event, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (this.view.suppressToggle) {
+          return;
+        }
+        this.$el.removeClass("selected");
+        this.$("input:checkbox").removeAttr("checked");
+        if (!options.silent) {
+          return this.model.trigger("deselected");
+        }
+      };
+
+      ListItem.prototype.enable = function() {
+        this.$el.removeClass("disabled");
+        this.$("input:checkbox").removeAttr("disabled");
+        this.$el.attr("tabindex", 0);
+        return this.model.trigger("enabled");
+      };
+
+      ListItem.prototype.disable = function() {
+        this.$el.addClass("disabled");
+        this.$("input:checkbox").attr("disabled", "disabled");
+        this.$el.attr("tabindex", -1);
+        return this.model.trigger("disabled");
+      };
+
+      ListItem.prototype.remove = function() {
+        this.deselect();
+        return ListItem.__super__.remove.call(this);
+      };
+
+      ListItem.prototype.stealfocus = function() {
+        return this.$el.focus();
+      };
+
+      return ListItem;
+
+    })(Backbone.View);
+    Ribs.ListItemCell = (function(_super) {
+
+      __extends(ListItemCell, _super);
+
+      ListItemCell.prototype.tagName = "div";
+
+      ListItemCell.prototype.className = "cell";
+
+      ListItemCell.prototype._ribsEvents = {
+        'click .edit': 'edit',
+        'blur .editableField': 'saveEditedField'
+      };
+
+      function ListItemCell(options) {
+        var _ref;
+        this.events || (this.events = {});
+        _.extend(this.events, this._ribsEvents);
+        _.extend(this, options);
+        ListItemCell.__super__.constructor.call(this, options);
+        this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
+        this.model.on("change change:" + this.options.field, this.render, this);
+      }
+
+      ListItemCell.prototype.renderableValue = function(nomap) {
+        var value;
+        value = this.model.get(this.options.field);
+        if ((this.options.map != null) && !nomap) {
+          value = this.options.map(value, this.model, this.$el);
+        }
+        return value;
+      };
+
+      ListItemCell.prototype.render = function() {
+        var editableEl, label, _ref, _ref1;
+        this.$el.empty();
+        if (this.options.escape) {
+          this.$el.text(this.renderableValue());
+        } else {
+          this.$el.html(this.renderableValue());
+        }
+        if (this.editable) {
+          label = (_ref = this.options.label) != null ? _ref : this.options.field;
+          editableEl = $.el.span({
+            "class": 'edit button inline',
+            title: "Edit " + label
+          }, '✎');
+          if ((_ref1 = this.model.get(this.options.field)) === null || _ref1 === '') {
+            $(editableEl).addClass('show');
+          } else {
+            $(editableEl).removeClass('show');
+          }
+          this.$el.append(editableEl);
+        }
+        return this;
+      };
+
+      ListItemCell.prototype.edit = function() {
+        var editField, value;
+        if (this.options.editable) {
+          value = this.model.get(this.options.field);
+          if (this.options.editable instanceof Function) {
+            editField = this.options.editable.call(this, value, this.model);
+          } else {
+            editField = $.el.input({
+              type: 'text',
+              value: value
+            });
+          }
+          if (editField) {
+            $(editField).addClass("editableField");
+            this.$el.html(editField);
+            this.delegateEvents();
+            $(editField).focus();
+          }
+        }
+        return false;
+      };
+
+      ListItemCell.prototype.saveEditedField = function(e) {
+        var changeSet, field, value;
+        field = $(e.target);
+        value = field.val();
+        changeSet = {};
+        changeSet[this.options.field] = value;
+        try {
+          return this.model.save(changeSet, {
+            wait: true
+          });
+        } catch (e) {
+          return this.render();
+        }
+      };
+
+      return ListItemCell;
+
+    })(Backbone.View);
+    Ribs.KeyboardManager = (function() {
+
+      KeyboardManager.prototype.boundCharCodes = {};
+
+      KeyboardManager.prototype.registeredViews = {
+        global: {
+          bindings: [],
+          tree: {},
+          label: "Global",
+          context: window
+        }
+      };
+
+      KeyboardManager.prototype.options = {
+        jumpPrefixKey: "g",
+        jumpTime: 1000,
+        enableKeyboardShortcuts: true
+      };
+
+      function KeyboardManager(options) {
+        var _this = this;
+        this.options = _.extend(this.options, options);
+        this.registerHotKey({
+          hotkey: "?",
+          callback: this.showKeyboardBindings,
+          context: this,
+          label: "Show hotkeys"
+        });
+        $(window).on("keypress", function(e) {
+          return _this.handleKeypress(e);
+        });
+      }
+
+      KeyboardManager.prototype.registerView = function(view, label) {
+        var namespace;
+        namespace = _.uniqueId("view");
+        this.registeredViews[namespace] = {
+          label: label,
+          context: view,
+          tree: {},
+          bindings: []
+        };
+        return namespace;
+      };
+
+      KeyboardManager.prototype.registerHotKey = function(options) {
+        var code, i, key, ns, _i, _len, _ref, _ref1, _ref2, _ref3;
+        if ((_ref = options.charCodes) == null) {
+          options.charCodes = (function() {
+            var _i, _len, _ref1, _results;
+            _ref1 = options.hotkey.split("");
+            _results = [];
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              key = _ref1[_i];
+              _results.push(key.charCodeAt(0));
+            }
+            return _results;
+          })();
+        }
+        ns = (_ref1 = options.namespace) != null ? _ref1 : options.namespace = "global";
+        root = this.registeredViews[ns].tree;
+        _ref2 = options.charCodes;
+        for (i = _i = 0, _len = _ref2.length; _i < _len; i = ++_i) {
+          code = _ref2[i];
+          if ((_ref3 = root[code]) == null) {
+            root[code] = {
+              bindings: [],
+              upcoming: 0
+            };
+          }
+          if (i === options.charCodes.length - 1) {
+            root[code].bindings.push(options);
+          } else {
+            root[code].upcoming += 1;
+          }
+          root = root[code];
+        }
+        this.registeredViews[ns].bindings.push(options);
+        return ns;
+      };
+
+      KeyboardManager.prototype.registerJumpKey = function(options) {
+        options.label = "Go to " + options.label;
+        options.hotkey = this.options.jumpPrefixKey + options.jumpkey;
+        return this.registerHotKey(options);
+      };
+
+      KeyboardManager.prototype.handleKeypress = function(event, namespace) {
+        var context, _ref;
+        if (namespace == null) {
+          namespace = "global";
+        }
+        if (!this.options.enableKeyboardShortcuts) {
+          return;
+        }
+        if ($(document.activeElement).is(":input")) {
+          return;
+        }
+        context = (_ref = this.currentContext) != null ? _ref : this.registeredViews[namespace].tree;
+        if (context != null) {
+          return this.execute(context, event.which);
+        }
+      };
+
+      KeyboardManager.prototype.execute = function(context, charCode) {
+        var binding, ctx, _i, _len, _ref, _ref1,
+          _this = this;
+        if (this.timeout) {
+          clearTimeout(this.timeout);
+        }
+        delete this.currentContext;
+        if (!(charCode in context)) {
+          return;
+        }
+        context = context[charCode];
+        if (context.upcoming === 0) {
+          _ref = context.bindings;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            binding = _ref[_i];
+            ctx = (_ref1 = binding.context) != null ? _ref1 : this.registeredViews[binding.namespace].context;
+            if (!(binding.precondition && !binding.precondition.call(ctx))) {
+              binding.callback.call(ctx);
+            }
+          }
+        } else {
+          this.currentContext = context;
+          this.timeout = setTimeout(function() {
+            return _this.execute(context);
+          }, this.options.jumpTime);
+        }
+        return false;
+      };
+
+      KeyboardManager.prototype.showKeyboardBindings = function() {
+        var view, _ref;
+        if ((_ref = this.constructor.view) != null) {
+          _ref.$el.remove();
+        }
+        view = this.constructor.view = new Ribs.KeyboardHelpView({
+          views: this.registeredViews,
+          hotkeys: this.boundCharCodes
+        });
+        view.render();
+        return $("body").append(view.el);
+      };
+
+      return KeyboardManager;
+
+    })();
+    return Ribs.KeyboardHelpView = (function(_super) {
+
+      __extends(KeyboardHelpView, _super);
+
+      function KeyboardHelpView() {
+        return KeyboardHelpView.__super__.constructor.apply(this, arguments);
+      }
+
+      KeyboardHelpView.prototype.className = "ribs-keyboard-shortcuts-overlay";
+
+      KeyboardHelpView.prototype.events = {
+        'click': "remove"
+      };
+
+      KeyboardHelpView.prototype.initialize = function(options) {
+        return $(window).bind('keyup', function(event) {
+          if (event.which === 27) {
+            this.remove();
+          }
+          return false;
+        });
+      };
+
+      KeyboardHelpView.prototype.render = function() {
+        var binding, h1, li, namespace, ul, view, _ref, _results;
+        this.$el.empty();
+        _ref = this.options.views;
+        _results = [];
+        for (namespace in _ref) {
+          view = _ref[namespace];
+          if (!$(view.el).is(":hidden")) {
+            h1 = $.el.h1(view.label);
+            ul = $.el.ul();
+            this.$el.append(h1, ul);
+            _results.push((function() {
+              var _i, _len, _ref1, _results1;
+              _ref1 = view.bindings;
+              _results1 = [];
+              for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+                binding = _ref1[_i];
+                li = $.el.li({
+                  "class": "hotkey"
+                }, $.el.span({
+                  "class": "key"
+                }, binding.hotkey), $.el.span({
+                  "class": "action"
+                }, binding.label));
+                _results1.push($(ul).append(li));
+              }
+              return _results1;
+            })());
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      };
+
+      return KeyboardHelpView;
+
+    })(Backbone.View);
   })(jQuery);
 
 }).call(this);

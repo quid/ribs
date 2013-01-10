@@ -1,379 +1,12 @@
 do ($=jQuery) ->
 
     # Make `Ribs` globally accessible.
-    window.Ribs = {}
-
-    # Jump keys
-    # ---------
-    
-    # Internal list for registered jump keys.
-    Ribs._boundJumpKeys = {}
-    # Hotkey to preceed any jump keys.
-    Ribs._jumpPrefixKey = "g"
-    # Time allowed between prefix and jump key.
-    Ribs._jumpTimeout = 1000
-
-    # Sets `_readyToJump` flag for `_jumpTimeout` milliseconds.
-    Ribs._poiseJump = ->
-        Ribs._readyToJump = true
-        clearTimeout(Ribs._jumpInterval)
-        Ribs._jumpInterval = setTimeout( ->
-            Ribs._readyToJump = false
-        , Ribs._jumpTimeout)
-
-    # Executes applicable jump key.
-    Ribs._makeJump = (charcode) ->
-        Ribs._readyToJump = false
-        clearTimeout Ribs._jumpTimeout
-        bindings = Ribs._boundJumpKeys[charcode]
-        if bindings? and bindings.length > 0
-            _.each bindings, (binding) ->
-                # Only jump if `el` is visible
-                unless binding.el? and $(binding.el).is(":hidden")
-                    binding.fn.apply(binding.ctx)
-
-    # The function to use when adding a jump key.
-    #
-    # + __label__:    Shown in the keyboard bindings pane.
-    # + __key__:      The jump key to use.
-    # + __fn__:       The callback for when jumpkey combo is hit.
-    # + __ctx__:      Context of the jumpkey callback (`this` within fn).
-    # + __el__:       The element (defaults to ctx.el). Must be visible on page
-    #                 for jumpkey to be active.
-    Ribs.bindJumpKey = (label, key, fn, ctx, el) ->
-        charCode = key.charCodeAt(0)
-        if not el? and ctx instanceof Backbone.View
-            el = ctx.el
-        Ribs._boundJumpKeys[charCode] ||= []
-        Ribs._boundJumpKeys[charCode].push 
-            label: label
-            fn: fn
-            ctx: ctx
-            el: el
-            key: key
-        charCode
-
-    # The function to use when removing a jump key.
-    Ribs.unbindJumpKey = (key, ctx) ->
-        charCode = key.charCodeAt(0)
-        _.each Ribs._boundJumpKeys[charCode], (binding, i)->
-            if binding.ctx is ctx
-                Ribs._boundJumpKeys[charCode].splice(i, 1)
-                if Ribs._boundJumpKeys[charCode].length is 0
-                    delete Ribs._boundJumpKeys[charCode]
-
-
-    # A registry for all views is required when showing hotkey help pane.
-    Ribs._registeredListViews = {}
-
-    # Function which will construct/display applicable keyboard shortcuts 
-    # in an overlay.
-    Ribs.showKeyboardBindings = ->
-
-        className = "ribs-keyboard-shortcuts-overlay"
-
-        # Remove any existing overlays if they exist.
-        $(".#{className}").remove()
-
-        # Create overlay div.
-        overlay = $.el.div(class: className)
-
-        # First section has generic hotkeys and jump keys.
-        ul = $.el.ul()
-        $(overlay).append $.el.h1("Navigation"), ul
-
-        # Loop through and add all jump keys.
-        _.each _.flatten(Ribs._boundJumpKeys), (binding) ->
-            unless binding.el and $(binding.el).is(":hidden")
-                li = $.el.li(
-                    { class: "hotkey" },
-                    $.el.span({class: "jump key"}, "g#{binding.key}"),
-                    $.el.span({class: "action"}, "Go to #{binding.label}")
-                )
-                $(ul).append li
-
-        # Generic ribs hotkeys.
-        keys = [
-            { key: "?", label: "Open this page" },
-            { key: "j", label: "Next item" },
-            { key: "J", label: "Last item" },
-            { key: "k", label: "Previous item" },
-            { key: "K", label: "First item" },
-            { key: "x", label: "Select/deselect item" },
-            { key: "X", label: "Select/deselect all" },
-            { key: "_", label: "Expand/collapse list" },
-            { key: "R", label: "Refresh items" }
-        ]
-
-        _.each keys, (binding) ->
-            li = $.el.li(
-                { class: "hotkey" },
-                $.el.span({class: "key"}, binding.key),
-                $.el.span({class: "action"}, binding.label)
-            )
-            $(ul).append li
-
-
-        # A new section for each registered list with all of its actions.
-        _.each Ribs._registeredListViews, (view) ->
-            unless $(view.el).is(":hidden")
-                h1 = $.el.h1 view.plural()
-                ul = $.el.ul()
-                $(overlay).append h1, ul
-                _.each view.actions, (action) ->
-                    if action.hotkey?
-                        li = $.el.li(
-                            { class: "hotkey" },
-                            $.el.span({class: "key"}, action.hotkey),
-                            $.el.span({class: "action"}, action.label)
-                        )
-                        $(ul).append li
-
-        # Clicking overlay will remove it.
-        $(overlay).bind 'click', ->
-            $(overlay).remove()
-            false
-
-        # __<return>__ or __<esc>__ will remove overlay.
-        $(window).bind 'keyup', (event) -> 
-            $(overlay).remove() if event.which is 27
-            false
-
-        $("body").append(overlay)
-        overlay
-
-    # Main jumpkey handler.
-    # TODO: wrap this in an optionally called `enableKeyboardShortcuts` method.
-    $(window).on "keypress", (event) ->
-        unless $(document.activeElement).is("input:text, textarea")
-            prefix = Ribs._jumpPrefixKey.charCodeAt(0)
-            if event.which is prefix and not Ribs._readyToJump
-                Ribs._poiseJump()
-            else if Ribs._readyToJump
-                Ribs._makeJump(event.which)
-            else if event.which is 63 # '?'
-                # Show hotkey bindings
-                Ribs.showKeyboardBindings()
-
-
-    # Views
-    # -----
-
-    # View for a list item in a regular `Ribs.List`.
-    class Ribs.ListItem extends Backbone.View
-
-        tagName: "li"
-
-        className: "item"
-
-        attributes:
-            tabindex: 0
-
-        _ribsEvents:
-            'click' : 'toggle'
-            'toggle' : 'toggle'
-            'select' : 'select'
-            'deselect' : 'deselect'
-            'click a' : 'stopPropogation'
-            'keypress' : 'keypressed'
-
-        constructor : (options) ->
-
-            @events ||= {}
-            _.extend @events, @_ribsEvents
-
-            @view = options?.view
-
-            # create cell views
-            @listItemCells = []
-            _.each @view.displayAttributes, (attribute) =>
-                attribute = _.clone(attribute)
-                attribute.view = @
-                attribute.model = options.model
-                @listItemCells.push new Ribs.ListItemCell attribute
-
-            super options
-
-            if @model?
-                @model.on 'change', @render, this
-                @model.on 'remove', @remove, this
-                @model.on 'stealfocus', @stealfocus, this
-  
-        render : ->
-            @$el.empty()
-            return unless @model
-            @$el.data("cid", @model.cid)
-
-            unless @view.suppressToggle
-                toggle = $.el.input
-                    type: "checkbox"
-                    tabindex: -1
-                if @$el.is ".selected"
-                    $(toggle).attr "checked", true
-                @$el.append $.el.div(
-                    { class: "toggle" },
-                    toggle
-                )
-
-            # Render our individual cells
-            _.each @listItemCells, (cell) =>
-                cell.render()
-                cell.delegateEvents()
-                @$el.append cell.el
-            obj = @model.toJSON()
-
-            # Add inline actions.
-            _.each @view.inlineActions, (action, key) =>
-                unless action.filter? and action.filter(@model) is false
-                    @$el.append action.renderInline(this)
-
-        toggle : ->
-            unless @$el.is(".disabled") or @view.suppressToggle
-                if @$el.is(".selected")
-                    @deselect()
-                else
-                    @select()
-
-        stopPropogation: (e) ->
-            e.stopImmediatePropagation()
-
-        select : (event, options={})->
-            return if @view.suppressToggle
-            @$el.addClass "selected"
-            @$el.find("input:checkbox").attr "checked", "checked"
-            @model.trigger "selected" unless options.silent
-
-        deselect : (event, options={})->
-            return if @view.suppressToggle
-            @$el.removeClass "selected"
-            @$el.find("input:checkbox").removeAttr "checked"
-            @model.trigger "deselected" unless options.silent
-
-        enable : ->
-            @$el.removeClass "disabled"
-            @$el.find("input:checkbox").removeAttr "disabled"
-            @$el.attr("tabindex", 0)
-            @model.trigger "enabled"
-
-        disable :-> 
-            @$el.addClass "disabled"
-            @$el.find("input:checkbox").attr "disabled", "disabled"
-            @$el.attr("tabindex", -1)
-            @model.trigger "disabled"
-
-        remove: ->
-            @deselect()
-            super()
-
-        keypressed : (event) -> 
-            unless Ribs._readyToJump or $(document.activeElement).is("input:text, textarea")
-                # __<return>__ and __x__ will toggle selection.
-                if event.which in [13, 120] and not @view.suppressToggle
-                    @toggle()
-                    return
-                if @view.inlineActions.length
-                    event.originalEvent.listItem = this
-
-        stealfocus: ->
-            @$el.focus()
-
-    class Ribs.ListItemCell extends Backbone.View
-  
-        tagName : "div"
-
-        className: "cell"
-    
-        _ribsEvents:
-            'click .edit' : 'edit'
-            'blur .editableField' : 'saveEditedField'
-  
-        constructor : (options) ->
-
-            @events ||= {}
-            _.extend @events, @_ribsEvents
-            _.extend this, options # TODO remove this
-            super options
-            @$el.addClass(@options.class ? @options.field)
-            @model.on "change change:#{@options.field}", @render, this
-
-        renderableValue: (nomap) ->
-            # first check if it is a top level attribute
-            value = @model.get(@options.field)
-            # else see if it is a nested attribute
-            value ||= walk_context(@options.field, @model.toJSON())
-            value = @options.map value, @model, @$el if @options.map? and !nomap
-            value
-
-        render: ()->
-            @$el.empty()
-
-            # cells are rendered as html by default
-            # unless escape is set 
-            if @options.escape
-                @$el.text(@renderableValue())
-            else
-                @$el.html(@renderableValue())
-
-            if @editable
-                label = @options.label ? @options.field
-                editableEl = $.el.span {
-                    class: 'edit button inline', 
-                    title: "Edit #{label}"}, '✎'
-                if @model.get(@options.field) in [null, '']
-                    $(editableEl).addClass('show')
-                else
-                    $(editableEl).removeClass('show')
-
-                @$el.append(editableEl) 
-
-            return this
-
-        edit: ->
-            # bind events for when it is editable
-            # and swap out the cell with any passed
-            # in element
-            if @options.editable
-
-                # default to a text field
-                if @options.editable instanceof Function
-                    editField = @options.editable.call this, @renderableValue(true), @model
-                else
-                    editField = $.el.input type: 'text', value: @renderableValue(true)
-
-                # A function may return null if it does its own thing
-                if editField
-                    $(editField).addClass("editableField")
-                    @$el.html(editField)
-                    @delegateEvents()
-                    $(editField).focus()
-                    @model.editing = true
-
-            return false
-
-        saveEditedField: (e) ->
-            field = $(e.target)
-            changeSet = {}
-            changeSet[@options.field] = field.val()
-            @model.changeSet = changeSet
-            try
-                @model.save changeSet,
-                    wait: true
-            catch e
-                @render()
-
-            # BB won't save if nothing changed
-            # but we need to rerender to get 
-            # the old cell view back
-            unless @model.hasChanged()
-                @model.trigger("change:#{@options.field}")
-
-            @model.editing = false
+    root = window ? module.exports
+    root.Ribs = {}
 
     # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View
   
-        itemView: Ribs.ListItem
-
         tagName: "div"
     
         itemName: "item"
@@ -405,31 +38,25 @@ do ($=jQuery) ->
 
             @className ||= ""
             @className += " ribs"
+
+            @itemView ?= Ribs.ListItem
     
             @events ||= {}
 
             _.extend @events, @_ribsEvents
             _.extend this, options
+
+            super options
       
-            key = _.uniqueId('ribs_view_')
-            Ribs._registeredListViews[key] = this
+            @initializeHotKeys()
 
             # Construct internal components (title, header, list etc.)
             @components = []
-            _.each @renderOrder, (t) =>
+            for t in @renderOrder
                 l = t.replace /^./, "$#{t[0].toLowerCase()}"
                 @[l] = @["initialize#{t}"]() unless @["suppress#{t}"]
                 @components.push @[l] if l of @
 
-            super options
-
-            # Bind jump key.
-            if @jumpkey?
-                Ribs.bindJumpKey @plural(), @jumpkey, ->
-                    @$el.find(@jumpSelector).focus()
-                , this
-
-            @on 'refresh', @refresh
             @$el.addClass('ribs')
 
             @build()
@@ -437,7 +64,7 @@ do ($=jQuery) ->
         build: ->
             @$el.empty()
 
-            _.each @components, (t) =>
+            for t in @components
                 @$el.append t
 
             @_subviews = []
@@ -446,7 +73,7 @@ do ($=jQuery) ->
                 @setCollection @collection
 
         render: ->
-            _.each @_subviews, (view,i) ->
+            for view, i in @_subviews
                 view.render()
             @updateFooter if @$footer
             @updateHeader if @$header
@@ -454,8 +81,8 @@ do ($=jQuery) ->
         setCollection: (collection)->
             @collection = collection
             # Update actions
-            _.each @allActions, (action) =>
-                action.setCollection @collection if action?
+            for action in @allActions
+                action?.setCollection @collection
 
             # Unbind events
             @collection.off "selected deselected reset add remove", null, this
@@ -471,12 +98,12 @@ do ($=jQuery) ->
         getSelected : ->
             return [] unless @$list?
             @$list.find(".item.selected").map (idx, el) =>
-                @collection.getByCid $(el).data("cid")
+                @collection.get $(el).data("cid")
 
         getDeselected: ->
             return [] unless @$list?
             @$list.find(".item:not(.selected)").map (idx, el) =>
-                @collection.getByCid $(el).data("cid")
+                @collection.get $(el).data("cid")
 
         getNumSelected: ->
             return 0 unless @$list?
@@ -490,7 +117,11 @@ do ($=jQuery) ->
             return 0 unless @collection?
             @collection.length
             
-        toggleSelected : (event) ->
+        toggleFocussedSelected: ->
+            unless @suppressToggle
+                @$(".item:focus").trigger "toggle"
+
+        toggleSelected : ->
             if @selectedByDefault is true 
                 @$list.find(".item.selected").trigger "deselect", silent: true
                 @selectedByDefault = false
@@ -541,13 +172,11 @@ do ($=jQuery) ->
 
                     # first check if it is a top level attribute
                     a = ma.get field
-                    a ||= walk_context field, ma.toJSON()
                     da = @displayAttributeMap[field]
                     if da.map?
                         a = da.map a
 
                     b = mb.get field
-                    b ||= walk_context field, mb.toJSON()
                     db = @displayAttributeMap[field]
                     if db.map?
                         b = db.map b
@@ -581,30 +210,81 @@ do ($=jQuery) ->
             label = $(el).html()?.replace(re, " #{@sortArrows[dir]}")
             $(el).html(label)
     
-        keypressed : (event) ->
-            unless Ribs._readyToJump or $(document.activeElement).is("input:text, textarea")
-                if event.which is 106 # j
+        initializeHotKeys: ->
+
+            # Lazily construct global keyboard manager
+            @constructor.keyboardManager ?= new Ribs.KeyboardManager()
+            @keyboardManager = @constructor.keyboardManager
+
+            # Register this view
+            @keyboardNamespace = @keyboardManager.registerView this, @plural()
+
+            # Bind jump key.
+            if @jumpkey?
+                @keyboardManager.registerJumpKey 
+                    label: @plural()
+                    jumpkey: @jumpkey
+                    context: this
+                    callback: =>
+                        @$(@jumpSelector).focus()
+                    precondition: =>
+                        @$el.is ":visible"
+
+            hotkeys = [
+                hotkey: "j"
+                label: "Focus next item"
+                callback: =>
                     $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus()
-                else if event.which is 107 # k
-                    $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus()
-                else if event.which is 74 # J
+            ,
+                hotkey: "J"
+                label: "Focus last item"
+                callback: =>
                     @$list.find(".item:last").focus()
-                else if event.which is 75 # K
+            ,
+                hotkey: "k" 
+                label: "Focus previous item"
+                callback: =>
+                    $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus()
+            ,
+                hotkey: "K"
+                label: "Focus first item"
+                callback: =>
                     @$list.find(".item:first").focus()
-                else if event.which is 95 # _
-                    @toggleVisibility()
-                else if event.which is 88 # X
+            ,
+                hotkey: "x"
+                label: "Select/deselect item"
+                callback: =>
+                    @toggleFocussedSelected()
+            ,
+                hotkey: "X"
+                label: "Select/deselect all"
+                callback: =>
                     @toggleSelected()
-                else if event.which is 82 # R
+            ,
+                hotkey: "_"
+                label: "Expand/collapse list"
+                callback: =>
+                    @toggleVisibility()
+            ,
+                hotkey: "R"
+                label: "Refresh items"
+                callback: =>
                     # refresh collection (from server)
-                    @collection.trigger 'before:refresh'
-                    @trigger 'refresh'
-                else
-                    # let the actions know
-                    @trigger "keypressed", event
+                    @refresh()
+            ]
+
+
+            for hotkey in hotkeys
+                hotkey.namespace = @keyboardNamespace
+                @keyboardManager.registerHotKey hotkey
+
+        keypressed : (event) ->
+            @trigger "keypressed", event
+            @keyboardManager.handleKeypress event, @keyboardNamespace
     
         refresh: ->
             if @collection.url?
+                @trigger 'refresh'
                 @collection.fetch
                     success: =>
                         @$list.find(".item:first")?.focus()
@@ -620,7 +300,7 @@ do ($=jQuery) ->
             if @focussed
                 # need to delay to find the proper next document.activeElement
                 setTimeout =>
-                    if @$el.find(document.activeElement).length is 0
+                    if @$(document.activeElement).length is 0
                         @$el.removeClass "focussed"
                     @focussed = false
                     @collection?.trigger "focusout"
@@ -650,14 +330,24 @@ do ($=jQuery) ->
             _.each @actions, (actionConfig) =>
                 actionConfig.collection = @collection
                 actionConfig.view = this
-                action = new Ribs.Action actionConfig
-                if action.inline
-                    @inlineActions.push action
-                if action.batch isnt false
+                if actionConfig.inline
+                    @inlineActions.push actionConfig
+                if actionConfig.batch isnt false
+                    action = new Ribs.Action actionConfig
                     @batchActions.push action
+                    @allActions.push action
                     action.render()
                     $batchActions.append action.el
-                @allActions.push action
+
+                if actionConfig.hotkey
+                    @keyboardManager.registerHotKey
+                        hotkey: actionConfig.hotkey
+                        label: actionConfig.label
+                        namespace: @keyboardNamespace
+                        context: actionConfig
+                        precondition: actionConfig.allowed
+                        callback: =>
+                            actionConfig.activate.call @, @getSelected()
 
             if @batchActions.length
                 $batchActions
@@ -763,129 +453,94 @@ do ($=jQuery) ->
         className: "action"
     
         _ribsEvents:
-            'click': 'triggerAction'
-            'keypress': 'keypressedHere'
+            'click': 'activate'
+            'keypress': 'keypressed'
   
         constructor : (options) ->
     
-            @min = 1
-            @max = -1 # -1 means no maximum
-            @arity = null # defining arity will override min/max
-            @check = null # defining check will be additional to min/max/arity
-
             @events ||= {}
             _.extend @events, @_ribsEvents
-            
-            _.extend this, options
+
             
             super options
 
+            @options = _.extend {
+                min : 1
+                max : -1 # -1 means no maximum
+                arity : null # defining arity will override min/max
+                check : null # defining check will be additional to min/max/arity
+            }, options
+
+            @view = options.view
+
             @setCollection @collection if @collection?
-
-            @view.on "keypressed", @keypressedOnView, this if @hotkey?
-
-            @checkRequirements()
     
         setCollection: (collection) ->
             if collection?
                 @collection = collection
                 @collection.off "selected deselected reset", null, this
                 @collection.on "selected deselected reset", @checkRequirements, this
+            @checkRequirements()
   
         checkRequirements: ->
             enable = @allowed()
             @disable() unless enable
             @enable() if enable
     
-        allowed : (l) ->
+        allowed : ->
 
-            l ||= @view.getNumSelected()
+            l = @getNumSelected()
     
             allow = false
     
-            if @arity?
-                a = @arity
+            if @options.arity?
+                a = @options.arity
                 r1 = a is l                           # arity is same as #selected
                 r2 = a is -1                          # arity is anything
                 r3 = !!(a % 1) and l >= Math.floor(a) # #selected >= floor(arity)
                 allow = r1 or r2 or r3
             else
-                r1 = @min is -1 or l >= @min          # minimum requirement is satisfied
-                r2 = @max is -1 or l <= @max          # maximum requirement is satisfied
+                r1 = @options.min is -1 or l >= @options.min          # minimum requirement is satisfied
+                r2 = @options.max is -1 or l <= @options.max          # maximum requirement is satisfied
                 allow = r1 and r2
     
-            if allow and @check?
-                allow = @check.apply(@view, [@view.getSelected()])
+            if allow and @options.check?
+                allow = @options.check.apply(@view, [@getSelected()])
     
             allow
+
+        getSelected: ->
+            @view.getSelected()
+
+        getNumSelected: ->
+            @view.getNumSelected()
     
         disable : ->
             @$el.addClass("disabled")
-            @$el.find(".button").attr("tabindex", -1)
+            @$(".button").attr("tabindex", -1)
     
         enable : ->
             @$el.removeClass("disabled")
-            @$el.find(".button").attr("tabindex", 0)
-    
-        # triggers activate on selected items
-        triggerAction : (event, listItem) ->
-            if not @$el.is(".disabled") and @allowed()
-                @activate.call(@view, @view.getSelected(), listItem)
-
-        # triggers activate on clicked item
-        triggerActionInline : (event, listItem) ->
-            unless listItem.$el.is ".disabled"
-                @activate.call(@view, [listItem.model], listItem)
-    
-        keypressedHere : (event) ->
-            # activate on <return>
-            if event.which is 13
-                @triggerAction(event)
-                return false
-            true
-    
-        keypressedOnView : (event) ->
-            if @hotkey? and @hotkey.charCodeAt(0) is event.which
-                listItem = event.originalEvent.listItem
-                if listItem? and @inline?
-                    @triggerActionInline(event, listItem)
-                else
-                    @triggerAction(event, listItem)
-                return false
+            @$(".button").attr("tabindex", 0)
     
         render : ->
-            @$el.html @drawButton()
-
-        drawButton: (inline=false, listItem) ->
-            if inline or not @$el.is(".disabled")
-                tabindex = 0
-            else
-                tabindex = -1
-            btn = $.el.div class: "button", tabindex: tabindex
-            if inline
-                label = @inlineLabel ? @label
-                if listItem? and label instanceof Function
-                    label = label.call this, listItem.model
-            else
-                label = @batchLabel ? @label
-                label = @constructor.highlightHotkey label, @hotkey if @hotkey?
-
+            label = @options.batchLabel ? @options.label
+            label = @constructor.highlightHotkey label, @options.hotkey if @options.hotkey?
+            tabindex = if @$el.is(".disabled") then -1 else 0
+            btn = $.el.div {class: "button", tabindex: tabindex, title: @options.label}
             $(btn).html label
-            $(btn).attr "title", @label
-            $(btn)
 
-        # renders an independent (rendered and bound)
-        renderInline: (listItem) ->
-            btn = @drawButton(true, listItem)
-            btn.addClass "inline"
-            $(btn).on "click", (event) =>
-                @triggerActionInline(event, listItem)
+            @$el.html btn
+
+        # triggers activate on selected items
+        activate : ->
+            @options.activate.call @view, @getSelected()
+    
+        keypressed : (event) ->
+            # activate on <return>
+            if event.which is 13
+                @activate()
                 false
-            $(btn).on "keypress", (event) =>
-                if event.which is 13
-                    @triggerActionInline(event, listItem) 
-                    false
-            btn
 
         @highlightHotkey : (label, hotkey) ->
             char = hotkey
@@ -893,16 +548,368 @@ do ($=jQuery) ->
             if label is new_label
                 new_label = "#{label} <span class='hotkey'>[<strong>#{char}</strong>]</span>"
             new_label
+
+    class Ribs.InlineAction extends Ribs.Action
+
+
+
+        getSelected: ->
+            [ @options.listItem?.model ]
+
+        getNumSelected: ->
+            1
+
+        render: ->
+            tabindex = 0
+
+            label = @options.inlineLabel ? @options.label
+
+            if label instanceof Function
+                label = label.call this, @options.listItem.model
+            
+            btn = $.el.div {class: "inline button", tabindex: tabindex, title: @label}, label
+
+            @$el.html btn
+
+
+    # View for a list item in a regular `Ribs.List`.
+    class Ribs.ListItem extends Backbone.View
+
+        tagName: "li"
+
+        className: "item"
+
+        attributes:
+            tabindex: 0
+
+        _ribsEvents:
+            'click' : 'toggle'
+            'toggle' : 'toggle'
+            'select' : 'select'
+            'deselect' : 'deselect'
+            'click a' : 'stopPropogation'
+
+        constructor : (options) ->
+
+            @events ||= {}
+            _.extend @events, @_ribsEvents
+
+            @view = options?.view
+
+            # create cell views
+            @listItemCells = []
+            for attribute in @view.displayAttributes
+                attribute = _.clone(attribute)
+                attribute.view = @
+                attribute.model = options.model
+                @listItemCells.push new Ribs.ListItemCell attribute
+
+            super options
+
+            if @model?
+                @model.on 'change', @render, this
+                @model.on 'remove', @remove, this
+                @model.on 'stealfocus', @stealfocus, this
+  
+        render : ->
+            @$el.empty()
+            return unless @model
+            @$el.data("cid", @model.cid)
+
+            unless @view.suppressToggle
+                toggle = $.el.input
+                    type: "checkbox"
+                    tabindex: -1
+                if @$el.is ".selected"
+                    $(toggle).attr "checked", true
+                @$el.append $.el.div(
+                    { class: "toggle" },
+                    toggle
+                )
+
+            # Render our individual cells
+            for cell in @listItemCells
+                cell.render()
+                cell.delegateEvents()
+                @$el.append cell.el
+            obj = @model.toJSON()
+
+            # Add inline actions.
+            ul = $.el.ul class: "actions"
+            for key, action of @view.inlineActions
+                unless action.filter? and action.filter(@model) is false
+                    options = _.extend action, listItem: this
+                    inlineAction = new Ribs.InlineAction options
+                    inlineAction.render()
+                    $(ul).append inlineAction.el
+            @$el.append ul
+
+        toggle: ->
+            unless @$el.is(".disabled")
+                if @$el.is(".selected")
+                    @deselect()
+                else
+                    @select()
+
+        stopPropogation: (e) ->
+            e.stopImmediatePropagation()
+
+        select: (event, options={})->
+            return if @view.suppressToggle
+            @$el.addClass "selected"
+            @$("input:checkbox").attr "checked", "checked"
+            @model.trigger "selected" unless options.silent
+
+        deselect : (event, options={})->
+            return if @view.suppressToggle
+            @$el.removeClass "selected"
+            @$("input:checkbox").removeAttr "checked"
+            @model.trigger "deselected" unless options.silent
+
+        enable : ->
+            @$el.removeClass "disabled"
+            @$("input:checkbox").removeAttr "disabled"
+            @$el.attr("tabindex", 0)
+            @model.trigger "enabled"
+
+        disable :-> 
+            @$el.addClass "disabled"
+            @$("input:checkbox").attr "disabled", "disabled"
+            @$el.attr("tabindex", -1)
+            @model.trigger "disabled"
+
+        remove: ->
+            @deselect()
+            super()
+
+        stealfocus: ->
+            @$el.focus()
+
+    class Ribs.ListItemCell extends Backbone.View
+  
+        tagName : "div"
+
+        className: "cell"
     
+        _ribsEvents:
+            'click .edit' : 'edit'
+            'blur .editableField' : 'saveEditedField'
+  
+        constructor : (options) ->
 
-    # utility method for accessing objects with dot syntax
-    # borrowed from mustache.js
-    walk_context = (name, context) ->
-        path = name.split "."
-        value = context[path.shift()]
-        while value? and path.length > 0
-            context = value
-            value = context[path.shift()]
-        return value.apply(context) if typeof value is "function"
-        value
+            @events ||= {}
+            _.extend @events, @_ribsEvents
+            _.extend this, options # TODO remove this
+            super options
+            @$el.addClass(@options.class ? @options.field)
+            @model.on "change change:#{@options.field}", @render, this
 
+        renderableValue: (nomap) ->
+            # first check if it is a top level attribute
+            value = @model.get(@options.field)
+            # else see if it is a nested attribute
+            value = @options.map value, @model, @$el if @options.map? and !nomap
+            value
+
+        render: ()->
+            @$el.empty()
+
+            # cells are rendered as html by default
+            # unless escape is set 
+            if @options.escape
+                @$el.text(@renderableValue())
+            else
+                @$el.html(@renderableValue())
+
+            if @editable
+                label = @options.label ? @options.field
+                editableEl = $.el.span {
+                    class: 'edit button inline', 
+                    title: "Edit #{label}"}, '✎'
+                if @model.get(@options.field) in [null, '']
+                    $(editableEl).addClass('show')
+                else
+                    $(editableEl).removeClass('show')
+
+                @$el.append(editableEl) 
+
+            return this
+
+        edit: ->
+            # bind events for when it is editable
+            # and swap out the cell with any passed
+            # in element
+            if @options.editable
+                value = @model.get @options.field
+                # default to a text field
+                if @options.editable instanceof Function
+                    editField = @options.editable.call this, value, @model
+                else
+                    editField = $.el.input type: 'text', value: value 
+
+                # A function may return null if it does its own thing
+                if editField
+                    $(editField).addClass("editableField")
+                    @$el.html(editField)
+                    @delegateEvents()
+                    $(editField).focus()
+
+            return false
+
+        saveEditedField: (e) ->
+            field = $(e.target)
+            value = field.val()
+            changeSet = {}
+            changeSet[@options.field] = value
+            try
+                @model.save changeSet,
+                    wait: true
+            catch e
+                @render()
+
+    class Ribs.KeyboardManager
+    
+        # Internal char code tree for registered hot keys.
+        boundCharCodes: {}
+
+        # A registry for all views is required when showing hotkey help pane.
+        registeredViews:
+            global:
+                bindings: []
+                tree: {}
+                label: "Global"
+                context: window
+
+        options:
+
+            # Hotkey to preceed any jump keys.
+            jumpPrefixKey: "g"
+
+            # Time allowed between prefix and jump key.
+            jumpTime: 1000
+
+            enableKeyboardShortcuts: true
+
+        constructor: (options) ->
+
+            @options = _.extend @options, options
+
+            @registerHotKey
+                hotkey: "?"
+                callback: @showKeyboardBindings
+                context: this
+                label: "Show hotkeys"
+
+            $(window).on "keypress", (e) => @handleKeypress(e)
+
+        registerView: (view, label) ->
+            namespace = _.uniqueId "view"
+            @registeredViews[namespace] = 
+                label: label
+                context: view
+                tree: {}
+                bindings: []
+            namespace
+
+        # options:
+        #  hotkey: string
+        #  label: string (displayed in help screen)
+        #  callback: function (required)
+        #  context: object
+        #  namespace: string
+        #  precondition: function
+        registerHotKey: (options) ->
+            options.charCodes ?= ( key.charCodeAt 0 for key in options.hotkey.split "" )
+            ns = options.namespace ?= "global"
+            root = @registeredViews[ns].tree
+            for code, i in options.charCodes
+                root[code] ?= { bindings: [], upcoming: 0 }
+                if i is options.charCodes.length - 1
+                    root[code].bindings.push options
+                else
+                    root[code].upcoming += 1
+                root = root[code]
+            @registeredViews[ns].bindings.push options
+            ns
+
+        registerJumpKey: (options) ->
+            options.label = "Go to #{options.label}"
+            options.hotkey = @options.jumpPrefixKey + options.jumpkey
+            @registerHotKey options
+
+
+        handleKeypress: (event, namespace="global") ->
+
+            return unless @options.enableKeyboardShortcuts
+
+            # don't do anything if user is typing text
+            return if $(document.activeElement).is(":input")
+
+            context = @currentContext ? @registeredViews[namespace].tree
+
+            @execute context, event.which if context?
+
+        execute: (context, charCode) ->
+
+            clearTimeout @timeout if @timeout
+            delete @currentContext
+            return unless charCode of context
+
+            context = context[charCode]
+
+            if context.upcoming is 0
+                for binding in context.bindings
+                    ctx = binding.context ? @registeredViews[binding.namespace].context
+                    unless binding.precondition and not binding.precondition.call ctx
+                        binding.callback.call ctx
+            else
+                @currentContext = context
+                @timeout = setTimeout =>
+                    @execute context
+                , @options.jumpTime
+
+            false
+
+
+        # Function which will construct/display applicable keyboard shortcuts 
+        # in an overlay.
+        showKeyboardBindings: ->
+            @constructor.view?.$el.remove()
+            view = @constructor.view = new Ribs.KeyboardHelpView
+                views: @registeredViews
+                hotkeys: @boundCharCodes
+
+            view.render()
+
+            $("body").append view.el
+            
+                
+
+    class Ribs.KeyboardHelpView extends Backbone.View
+
+        className: "ribs-keyboard-shortcuts-overlay"
+
+        events: 
+            'click' : "remove"
+
+        initialize: (options) ->
+            # __<return>__ or __<esc>__ will remove overlay.
+            $(window).bind 'keyup', (event) -> 
+                @remove() if event.which is 27
+                false
+
+        render: ->
+            @$el.empty()
+
+            for namespace, view of @options.views
+                unless $(view.el).is(":hidden")
+                    h1 = $.el.h1 view.label
+                    ul = $.el.ul()
+                    @$el.append h1, ul
+                    for binding in view.bindings
+                        li = $.el.li(
+                            { class: "hotkey" },
+                            $.el.span({class: "key"}, binding.hotkey),
+                            $.el.span({class: "action"}, binding.label)
+                        )
+                        $(ul).append li

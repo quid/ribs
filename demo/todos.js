@@ -10,12 +10,16 @@
 
         // Next we build a Ribs list for the todos.
         var todos_view = new Ribs.List({
+
             // Reference the collection.
             collection: todos,
+
             // Give todos  a better name than the default 'item'.
             itemName: "todo",
+
             // Jump to the list by hitting __g__ and then __t__.
             jumpkey: "t",
+
             // This set of attributes determines what are shown as columns.
             displayAttributes: [
                 {
@@ -34,16 +38,19 @@
             ],
             // We're providing several different flavors of action here.
             actions: [
-                // First we have a standard 'New' action.
                 {
                     // This label will show up in the keyboard help pane.
                     label: "New TODO",
+
                     // This overrides the label shown on the button.
                     batchLabel: "New",
+
                     // Hotkey available when focus is within ribs object.
                     hotkey: "N",
+
                     // No minimum selection criterea.
                     min: 0,
+
                     // This is called on click, or when hotkey is hit
                     // remember: scope is the `Ribs.List` instance.
                     activate: function() {
@@ -57,25 +64,21 @@
                         }
                     }
                 },
+
                 {
                     label: "Complete",
                     inlineLabel: "✓",
                     inline: true,
                     batch: false,
                     hotkey: "c",
-                    activate: function(selected, listItem) {
-                        if (listItem !== undefined){
-                            // If triggered inline.
-                            listItem.model.set("completed", true);
-                            this.getByCid(listItem.model.cid).$el.focus();
-                        } else { 
-                            // if triggered by batch.
-                            _.each(selected, function(model) {
-                                model.set("completed", true);
-                            });
-                        }
+                    activate: function(selected) {
+                        _.each(selected, function(model) {
+                            console.log(model);
+                            model.set("completed", true);
+                        });
                     }
                 },
+
                 // This action is completely hidden from the rendered 
                 // Ribs list. However It is visible on the keyboard
                 // bindings pane and can be activated by hotkey.
@@ -84,19 +87,13 @@
                     batch: false,
                     hotkey: "u",
                     min: 0,
-                    activate: function(selected, listItem) {
-                        if (listItem !== undefined){
-                            // If triggered inline.
-                            listItem.model.set("completed", false);
-                            this.getByCid(listItem.model.cid).$el.focus();
-                        } else { 
-                            // If triggered by batch.
-                            _.each(selected, function(model) {
-                                model.set("completed", false);
-                            });
-                        }
+                    activate: function(selected) {
+                        _.each(selected, function(model) {
+                            model.set("completed", false);
+                        });
                     }
                 },
+
                 {
                     label: "Clear selected",
                     hotkey: "C",
@@ -113,9 +110,9 @@
             // strike-thru look happening for completed items.
             itemView: Ribs.ListItem.extend({
                 initialize: function(options) {
-                    var t = this;
+                    var _this = this;
                     this.model.on("change", function(){
-                        t.$el.toggleClass("done", t.model.get("completed"));
+                        _this.$el.toggleClass("done", _this.model.get("completed"));
                     });
                 }
             })
@@ -129,7 +126,7 @@
         // Render the Ribs list.
         todos_view.render();
         $("a[href=#showKeyboardBindings]").click(function() {
-            Ribs.showKeyboardBindings();
+            Ribs.List.keyboardManager.showKeyboardBindings();
             return false;
         });
         
