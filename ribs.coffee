@@ -594,6 +594,7 @@ do ($=jQuery) ->
             @events ||= {}
             _.extend @events, @_ribsEvents
 
+            @itemCellView ?= Ribs.ListItemCell
             @view = options?.view
 
             # create cell views
@@ -602,7 +603,7 @@ do ($=jQuery) ->
                 attribute = _.clone(attribute)
                 attribute.view = @
                 attribute.model = options.model
-                @listItemCells.push new Ribs.ListItemCell attribute
+                @listItemCells.push new @itemCellView attribute
 
             super options
 
@@ -744,10 +745,16 @@ do ($=jQuery) ->
                 # default to a text field
                 if @options.editable instanceof Function
                     editField = @options.editable.call this, value, @model
+                else if @options.editable instanceof Array
+                    el = $.el.select()
+                    for option in @options.editable
+                        optionEl = $.el.option { value: option }, option
+                        $(optionEl).attr 'selected', option is value
+                        $(el).append optionEl
+                    editField = el
                 else
                     editField = $.el.input type: 'text', value: value 
 
-                # A function may return null if it does its own thing
                 if editField
                     $(editField).addClass("editableField")
                     @$el.html(editField)
