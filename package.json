@@ -1,6 +1,6 @@
 {
     "name": "ribs", 
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Ribs sits upon Backbone to provide a functional list widget.",
     "contributors": [
         "Joey Hobbs <joey@quid.com>",

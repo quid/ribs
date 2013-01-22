@@ -23,6 +23,8 @@
         'click [data-sort-by]': 'sortByField'
       };
 
+      List.prototype._ribsOptions = ["displayAttributes", "actions", "itemView"];
+
       List.prototype.jumpSelector = ".list li:first";
 
       List.prototype.focussed = false;
@@ -36,84 +38,74 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var l, t, _i, _len, _ref, _ref1;
+        var k, _i, _len, _ref, _ref1, _ref2;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
-        this.className || (this.className = "");
-        this.className += " ribs";
         if ((_ref = this.itemView) == null) {
           this.itemView = Ribs.ListItem;
         }
-        this.events || (this.events = {});
-        _.extend(this.events, this._ribsEvents);
-        _.extend(this, options);
+        if ((_ref1 = this.actionView) == null) {
+          this.actionView = Ribs.BatchAction;
+        }
+        this.events = _.extend({}, this.events, this._ribsEvents);
+        this.sortingDirection = {};
+        this.sortingBy = "id";
         List.__super__.constructor.call(this, options);
-        this.initializeHotKeys();
-        this.components = [];
-        _ref1 = this.renderOrder;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          t = _ref1[_i];
-          l = t.replace(/^./, "$" + (t[0].toLowerCase()));
-          if (!this["suppress" + t]) {
-            this[l] = this["initialize" + t]();
-          }
-          if (l in this) {
-            this.components.push(this[l]);
+        _ref2 = this._ribsOptions;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          k = _ref2[_i];
+          if (options[k] != null) {
+            this[k] = options[k];
           }
         }
+        this.initializeHotKeys();
         this.$el.addClass('ribs');
         this.build();
       }
 
       List.prototype.build = function() {
-        var t, _i, _len, _ref;
+        var l, t, _i, _len, _ref;
         this.$el.empty();
-        _ref = this.components;
+        _ref = this.renderOrder;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           t = _ref[_i];
-          this.$el.append(t);
+          l = t.replace(/^./, "$" + (t[0].toLowerCase()));
+          if (!this["suppress" + t]) {
+            this[l] = this["initialize" + t]();
+          }
+          this.$el.append(this[l]);
         }
-        this._subviews = [];
+        this.updateHeaderArrows(this.sortingBy);
         if (this.collection != null) {
           return this.setCollection(this.collection);
         }
       };
 
       List.prototype.render = function() {
-        var i, view, _i, _len, _ref;
-        _ref = this._subviews;
-        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-          view = _ref[i];
-          view.render();
+        var t, _i, _len, _ref, _results;
+        _ref = this.renderOrder;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          t = _ref[_i];
+          if (!this["suppress" + t]) {
+            _results.push(this["render" + t]());
+          } else {
+            _results.push(void 0);
+          }
         }
-        if (this.$footer) {
-          this.updateFooter;
-        }
-        if (this.$header) {
-          return this.updateHeader;
-        }
+        return _results;
       };
 
       List.prototype.setCollection = function(collection) {
-        var action, _i, _len, _ref;
         this.collection = collection;
-        _ref = this.allActions;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          action = _ref[_i];
-          if (action != null) {
-            action.setCollection(this.collection);
-          }
-        }
         this.collection.off("selected deselected reset add remove", null, this);
         this.collection.on("add", this.addItem, this);
-        this.collection.on("reset", this.addAllItems, this);
-        if (this.$header) {
-          this.collection.on("selected deselected reset add remove", this.updateHeader, this);
-        }
-        if (this.$footer) {
-          this.collection.on("selected deselected reset add remove", this.updateFooter, this);
-        }
+        this.collection.on("sort reset", this.addAllItems, this);
+        this.collection.on("reset", this.render, this);
+        this.collection.on("selected deselected add remove", this.renderActions, this);
+        this.collection.on("selected deselected add remove", this.renderHeader, this);
+        this.collection.on("selected deselected add remove", this.renderFooter, this);
         return this.addAllItems();
       };
 
@@ -200,9 +192,8 @@
       List.prototype.sortByField = function(event) {
         var dir, field, old_field;
         field = $(event.target).attr("data-sort-by");
-        if (field != null) {
+        if ((field != null) && (this.collection != null)) {
           old_field = this.sortingBy;
-          this.sortingDirection || (this.sortingDirection = {});
           this.sortingBy = field;
           if (field === old_field && field in this.sortingDirection) {
             this.sortingDirection[field] *= -1;
@@ -253,20 +244,17 @@
       };
 
       List.prototype.updateHeaderArrows = function(field, old_field) {
-        var dir, el, label, old_el, old_label, re, _ref, _ref1, _ref2;
-        if (this.collection == null) {
-          return;
-        }
+        var dir, el, re, _ref;
         re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
         dir = (_ref = this.sortingDirection[field]) != null ? _ref : 1;
         if (old_field != null) {
-          old_el = this.$header.find("[data-sort-by='" + old_field + "']");
-          old_label = (_ref1 = old_el.html()) != null ? _ref1.replace(re, "") : void 0;
-          $(old_el).html(old_label);
+          this.$header.find("[data-sort-by='" + old_field + "'] .arrow").remove();
         }
-        el = this.$header.find("[data-sort-by='" + field + "']");
-        label = (_ref2 = $(el).html()) != null ? _ref2.replace(re, " " + this.sortArrows[dir]) : void 0;
-        return $(el).html(label);
+        el = $("<span />", {
+          "class": "arrow",
+          text: this.sortArrows[dir]
+        });
+        return this.$header.find("[data-sort-by='" + field + "']").append(el);
       };
 
       List.prototype.initializeHotKeys = function() {
@@ -396,69 +384,6 @@
         return (_ref = this.itemNamePlural) != null ? _ref : this.itemName + "s";
       };
 
-      List.prototype.initializeTitle = function() {
-        var $title, title, _ref;
-        title = (_ref = this.title) != null ? _ref : this.plural();
-        if (title instanceof Function) {
-          title = title.call(this);
-        }
-        $title = $($.el.h1({
-          "class": "title"
-        }, title));
-        return $title;
-      };
-
-      List.prototype.initializeActions = function() {
-        var $batchActions,
-          _this = this;
-        this.batchActions = [];
-        this.inlineActions = [];
-        this.allActions = [];
-        $batchActions = $($.el.ul({
-          "class": "actions"
-        }));
-        _.each(this.actions, function(actionConfig) {
-          var action;
-          actionConfig.collection = _this.collection;
-          actionConfig.view = _this;
-          if (actionConfig.inline) {
-            _this.inlineActions.push(actionConfig);
-          }
-          if (actionConfig.batch !== false) {
-            action = new Ribs.Action(actionConfig);
-            _this.batchActions.push(action);
-            _this.allActions.push(action);
-            action.render();
-            $batchActions.append(action.el);
-          }
-          if (actionConfig.hotkey) {
-            return _this.keyboardManager.registerHotKey({
-              hotkey: actionConfig.hotkey,
-              label: actionConfig.label,
-              namespace: _this.keyboardNamespace,
-              context: actionConfig,
-              precondition: actionConfig.allowed,
-              callback: function() {
-                return actionConfig.activate.call(_this, _this.getSelected());
-              }
-            });
-          }
-        });
-        if (this.batchActions.length) {
-          return $batchActions;
-        } else {
-          return null;
-        }
-      };
-
-      List.prototype.initializeList = function() {
-        var $list;
-        $list = $($.el.ul({
-          "class": "list"
-        }));
-        return $list;
-      };
-
       List.prototype.addItem = function(model) {
         var idx, itemView, view, _ref;
         if (Backbone.View.prototype.isPrototypeOf(this.itemView.prototype)) {
@@ -480,7 +405,7 @@
         if (this.$el.is(":visible")) {
           view.render();
         }
-        this._subviews.push(view);
+        this._listSubviews.push(view);
         if (this.selectedByDefault) {
           return view.select();
         }
@@ -488,43 +413,116 @@
 
       List.prototype.addAllItems = function() {
         var _ref;
-        this._subviews = [];
+        this._listSubviews = [];
         this.$list.empty();
-        if ((_ref = this.collection) != null) {
-          _ref.each(this.addItem, this);
-        }
-        return this.trigger("rendered");
+        return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
       };
 
       List.prototype.get = function(id) {
-        return _.find(this._subviews, function(view) {
+        return _.find(this._listSubviews, function(view) {
           return view.model.id === id;
         });
       };
 
       List.prototype.getByCid = function(cid) {
-        return _.find(this._subviews, function(view) {
+        return _.find(this._listSubviews, function(view) {
           return view.model.cid === cid;
         });
+      };
+
+      List.prototype.initializeTitle = function() {
+        var $title, title, _ref;
+        title = (_ref = this.title) != null ? _ref : this.plural();
+        if (_.isFunction(title)) {
+          title = title.call(this);
+        }
+        $title = $("<h1 />", {
+          "class": "title",
+          text: title
+        });
+        return $title;
+      };
+
+      List.prototype.renderTitle = function() {};
+
+      List.prototype.initializeActions = function() {
+        var $batchActions,
+          _this = this;
+        this.batchActions = [];
+        this.inlineActions = [];
+        this.allActions = [];
+        this._actionSubviews = [];
+        $batchActions = $("<ul/>", {
+          "class": "actions"
+        });
+        _.each(this.actions, function(actionConfig) {
+          var action, view;
+          action = new Ribs.Action(actionConfig, {
+            view: _this
+          });
+          _this.allActions.push(action);
+          if (actionConfig.inline) {
+            _this.inlineActions.push(action);
+          }
+          if (actionConfig.batch !== false) {
+            _this.batchActions.push(action);
+            view = new _this.actionView({
+              model: action
+            });
+            _this._actionSubviews.push(view);
+            $batchActions.append(view.el);
+            return view.render();
+          }
+        });
+        return $batchActions;
+      };
+
+      List.prototype.renderActions = function() {
+        var view, _i, _len, _ref, _results;
+        _ref = this._actionSubviews;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          view = _ref[_i];
+          _results.push(view.render());
+        }
+        return _results;
+      };
+
+      List.prototype.initializeList = function() {
+        var $list;
+        $list = $("<ul/>", {
+          "class": "list"
+        });
+        return $list;
+      };
+
+      List.prototype.renderList = function() {
+        var view, _i, _len, _ref, _results;
+        _ref = this._listSubviews;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          view = _ref[_i];
+          _results.push(view.render());
+        }
+        return _results;
       };
 
       List.prototype.initializeHeader = function() {
         var $header, attributes, toggle,
           _this = this;
-        $header = $($.el.div({
+        $header = $("<div />", {
           "class": "header"
-        }));
+        });
         if (!this.suppressToggle) {
-          toggle = $.el.input({
+          toggle = $("<input />", {
             type: "checkbox",
-            tabindex: -1
+            tabindex: -1,
+            checked: this.selectedByDefault
           });
-          if (this.selectedByDefault) {
-            $(toggle).attr("checked", "checked");
-          }
-          $header.append($.el.div({
-            "class": "toggle"
-          }, toggle));
+          $header.append($("<div />", {
+            "class": "toggle",
+            html: toggle
+          }));
         }
         if (this.displayAttributes == null) {
           attributes = _.map(this.collection.first().toJSON(), function(v, k) {
@@ -535,23 +533,21 @@
         }
         this.displayAttributeMap = {};
         _.each(this.displayAttributes, function(attribute) {
-          var klass, label, _ref, _ref1;
+          var field, klass, label, _ref, _ref1;
           _this.displayAttributeMap[attribute.field] = attribute;
           label = (_ref = attribute.label) != null ? _ref : attribute.field;
           klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
-          return $header.append($.el.div({
+          field = $("<div/>", {
             "class": klass,
             "data-sort-by": attribute.sortField || attribute.field
-          }, label));
+          });
+          field.append(label);
+          return $header.append(field);
         });
-        $header.find(".maximize, .minimize").click(function() {
-          return _this.toggleVisibility();
-        });
-        $header.find("[data-sort-by=" + this.sortingBy + "]").append(" " + this.sortArrows[1]);
         return $header;
       };
 
-      List.prototype.updateHeader = function() {
+      List.prototype.renderHeader = function() {
         var isChecked, isTransparent, l, n, opacity;
         n = this.getNumSelected();
         l = this.getNumTotal();
@@ -569,13 +565,13 @@
 
       List.prototype.initializeFooter = function() {
         var $footer;
-        $footer = $($.el.div({
+        $footer = $("<div/>", {
           "class": "footer"
-        }));
+        });
         return $footer;
       };
 
-      List.prototype.updateFooter = function() {
+      List.prototype.renderFooter = function() {
         var plural, word;
         plural = this.getNumTotal() !== 1;
         word = plural ? this.plural() : this.itemName;
@@ -585,169 +581,6 @@
       return List;
 
     })(Backbone.View);
-    Ribs.Action = (function(_super) {
-
-      __extends(Action, _super);
-
-      Action.prototype.tagName = "li";
-
-      Action.prototype.className = "action";
-
-      Action.prototype._ribsEvents = {
-        'click': 'activate',
-        'keypress': 'keypressed'
-      };
-
-      function Action(options) {
-        this.events || (this.events = {});
-        _.extend(this.events, this._ribsEvents);
-        Action.__super__.constructor.call(this, options);
-        this.options = _.extend({
-          min: 1,
-          max: -1,
-          arity: null,
-          check: null
-        }, options);
-        this.view = options.view;
-        if (this.collection != null) {
-          this.setCollection(this.collection);
-        }
-      }
-
-      Action.prototype.setCollection = function(collection) {
-        if (collection != null) {
-          this.collection = collection;
-          this.collection.off("selected deselected reset", null, this);
-          this.collection.on("selected deselected reset", this.checkRequirements, this);
-        }
-        return this.checkRequirements();
-      };
-
-      Action.prototype.checkRequirements = function() {
-        var enable;
-        enable = this.allowed();
-        if (!enable) {
-          this.disable();
-        }
-        if (enable) {
-          return this.enable();
-        }
-      };
-
-      Action.prototype.allowed = function() {
-        var a, allow, l, r1, r2, r3;
-        l = this.getNumSelected();
-        allow = false;
-        if (this.options.arity != null) {
-          a = this.options.arity;
-          r1 = a === l;
-          r2 = a === -1;
-          r3 = !!(a % 1) && l >= Math.floor(a);
-          allow = r1 || r2 || r3;
-        } else {
-          r1 = this.options.min === -1 || l >= this.options.min;
-          r2 = this.options.max === -1 || l <= this.options.max;
-          allow = r1 && r2;
-        }
-        if (allow && (this.options.check != null)) {
-          allow = this.options.check.apply(this.view, [this.getSelected()]);
-        }
-        return allow;
-      };
-
-      Action.prototype.getSelected = function() {
-        return this.view.getSelected();
-      };
-
-      Action.prototype.getNumSelected = function() {
-        return this.view.getNumSelected();
-      };
-
-      Action.prototype.disable = function() {
-        this.$el.addClass("disabled");
-        return this.$(".button").attr("tabindex", -1);
-      };
-
-      Action.prototype.enable = function() {
-        this.$el.removeClass("disabled");
-        return this.$(".button").attr("tabindex", 0);
-      };
-
-      Action.prototype.render = function() {
-        var btn, label, tabindex, _ref;
-        label = (_ref = this.options.batchLabel) != null ? _ref : this.options.label;
-        if (this.options.hotkey != null) {
-          label = this.constructor.highlightHotkey(label, this.options.hotkey);
-        }
-        tabindex = this.$el.is(".disabled") ? -1 : 0;
-        btn = $.el.div({
-          "class": "button",
-          tabindex: tabindex,
-          title: this.options.label
-        });
-        $(btn).html(label);
-        return this.$el.html(btn);
-      };
-
-      Action.prototype.activate = function() {
-        return this.options.activate.call(this.view, this.getSelected());
-      };
-
-      Action.prototype.keypressed = function(event) {
-        if (event.which === 13) {
-          this.activate();
-          return false;
-        }
-      };
-
-      Action.highlightHotkey = function(label, hotkey) {
-        var char, new_label;
-        char = hotkey;
-        new_label = label.replace(char, "<span class='hotkey'><strong>" + char + "</strong></span>");
-        if (label === new_label) {
-          new_label = "" + label + " <span class='hotkey'>[<strong>" + char + "</strong>]</span>";
-        }
-        return new_label;
-      };
-
-      return Action;
-
-    })(Backbone.View);
-    Ribs.InlineAction = (function(_super) {
-
-      __extends(InlineAction, _super);
-
-      function InlineAction() {
-        return InlineAction.__super__.constructor.apply(this, arguments);
-      }
-
-      InlineAction.prototype.getSelected = function() {
-        var _ref;
-        return [(_ref = this.options.listItem) != null ? _ref.model : void 0];
-      };
-
-      InlineAction.prototype.getNumSelected = function() {
-        return 1;
-      };
-
-      InlineAction.prototype.render = function() {
-        var btn, label, tabindex, _ref;
-        tabindex = 0;
-        label = (_ref = this.options.inlineLabel) != null ? _ref : this.options.label;
-        if (label instanceof Function) {
-          label = label.call(this, this.options.listItem.model);
-        }
-        btn = $.el.div({
-          "class": "inline button",
-          tabindex: tabindex,
-          title: this.label
-        }, label);
-        return this.$el.html(btn);
-      };
-
-      return InlineAction;
-
-    })(Ribs.Action);
     Ribs.ListItem = (function(_super) {
 
       __extends(ListItem, _super);
@@ -769,45 +602,52 @@
       };
 
       function ListItem(options) {
-        var attribute, _i, _len, _ref;
+        var attribute, _i, _len, _ref, _ref1, _ref2;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
+        if ((_ref = this.itemCellView) == null) {
+          this.itemCellView = Ribs.ListItemCell;
+        }
+        if ((_ref1 = this.actionView) == null) {
+          this.actionView = Ribs.InlineAction;
+        }
         this.view = options != null ? options.view : void 0;
         this.listItemCells = [];
-        _ref = this.view.displayAttributes;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          attribute = _ref[_i];
+        _ref2 = this.view.displayAttributes;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          attribute = _ref2[_i];
           attribute = _.clone(attribute);
           attribute.view = this;
           attribute.model = options.model;
-          this.listItemCells.push(new Ribs.ListItemCell(attribute));
+          this.listItemCells.push(new this.itemCellView(attribute));
         }
         ListItem.__super__.constructor.call(this, options);
         if (this.model != null) {
           this.model.on('change', this.render, this);
           this.model.on('remove', this.remove, this);
-          this.model.on('stealfocus', this.stealfocus, this);
         }
       }
 
       ListItem.prototype.render = function() {
-        var action, cell, inlineAction, key, obj, options, toggle, ul, _i, _len, _ref, _ref1;
+        var action, cell, div, inlineAction, key, obj, toggle, ul, _i, _len, _ref, _ref1;
         this.$el.empty();
         if (!this.model) {
           return;
         }
         this.$el.data("cid", this.model.cid);
         if (!this.view.suppressToggle) {
-          toggle = $.el.input({
+          toggle = $("<input/>", {
             type: "checkbox",
             tabindex: -1
           });
           if (this.$el.is(".selected")) {
             $(toggle).attr("checked", true);
           }
-          this.$el.append($.el.div({
+          div = $("<div/>", {
             "class": "toggle"
-          }, toggle));
+          });
+          div.append(toggle);
+          this.$el.append(div);
         }
         _ref = this.listItemCells;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -817,17 +657,17 @@
           this.$el.append(cell.el);
         }
         obj = this.model.toJSON();
-        ul = $.el.ul({
+        ul = $("<ul/>", {
           "class": "actions"
         });
         _ref1 = this.view.inlineActions;
         for (key in _ref1) {
           action = _ref1[key];
           if (!((action.filter != null) && action.filter(this.model) === false)) {
-            options = _.extend(action, {
+            inlineAction = new this.actionView({
+              model: action,
               listItem: this
             });
-            inlineAction = new Ribs.InlineAction(options);
             inlineAction.render();
             $(ul).append(inlineAction.el);
           }
@@ -896,10 +736,6 @@
         return ListItem.__super__.remove.call(this);
       };
 
-      ListItem.prototype.stealfocus = function() {
-        return this.$el.focus();
-      };
-
       return ListItem;
 
     })(Backbone.View);
@@ -945,10 +781,11 @@
         }
         if (this.editable) {
           label = (_ref = this.options.label) != null ? _ref : this.options.field;
-          editableEl = $.el.span({
+          editableEl = $("<span/>", {
             "class": 'edit button inline',
-            title: "Edit " + label
-          }, '✎');
+            title: "Edit " + label,
+            text: '✎'
+          });
           if ((_ref1 = this.model.get(this.options.field)) === null || _ref1 === '') {
             $(editableEl).addClass('show');
           } else {
@@ -960,22 +797,46 @@
       };
 
       ListItemCell.prototype.edit = function() {
-        var editField, value;
+        var editField, key, option, optionEl, value, _i, _len, _ref, _ref1;
         if (this.options.editable) {
           value = this.model.get(this.options.field);
-          if (this.options.editable instanceof Function) {
-            editField = this.options.editable.call(this, value, this.model);
+          if (_.isFunction(this.options.editable)) {
+            editField = $(this.options.editable.call(this, value, this.model));
+          } else if (_.isArray(this.options.editable)) {
+            editField = $("<select/>");
+            _ref = this.options.editable;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              option = _ref[_i];
+              optionEl = $("<option/>", {
+                value: option,
+                text: option,
+                selected: options === value
+              });
+              editField.append(optionEl);
+            }
+          } else if (_.isObject(this.options.editable)) {
+            editField = $("<select/>");
+            _ref1 = this.options.editable;
+            for (key in _ref1) {
+              option = _ref1[key];
+              optionEl = $("<option/>", {
+                value: key,
+                text: option,
+                selected: key === value
+              });
+              editField.append(optionEl);
+            }
           } else {
-            editField = $.el.input({
+            editField = $("<input/>", {
               type: 'text',
               value: value
             });
           }
           if (editField) {
-            $(editField).addClass("editableField");
+            editField.addClass("editableField");
             this.$el.html(editField);
             this.delegateEvents();
-            $(editField).focus();
+            editField.focus();
           }
         }
         return false;
@@ -999,6 +860,180 @@
       return ListItemCell;
 
     })(Backbone.View);
+    Ribs.Action = (function(_super) {
+
+      __extends(Action, _super);
+
+      function Action() {
+        return Action.__super__.constructor.apply(this, arguments);
+      }
+
+      Action.prototype.defaults = {
+        min: 1,
+        max: -1,
+        arity: null,
+        check: null
+      };
+
+      Action.prototype.initialize = function(attributes, options) {
+        var _this = this;
+        this.ribs = options.view;
+        return this.ribs.keyboardManager.registerHotKey({
+          hotkey: this.get("hotkey"),
+          label: this.get("label"),
+          namespace: this.ribs.keyboardNamespace,
+          context: this,
+          precondition: this.allowed,
+          callback: function() {
+            return _this.activate();
+          }
+        });
+      };
+
+      Action.prototype.allowed = function(selected) {
+        var a, allow, l, r1, r2;
+        if (selected == null) {
+          selected = this.getSelected();
+        }
+        l = selected.length;
+        allow = false;
+        if (this.get("arity") != null) {
+          a = this.options.arity;
+          r1 = a === l;
+          r2 = a === -1;
+          allow = r1 || r2;
+        } else {
+          r1 = this.get("min") === -1 || l >= this.get("min");
+          r2 = this.get("max") === -1 || l <= this.get("max");
+          allow = r1 && r2;
+        }
+        if (allow && (this.get("check") != null)) {
+          allow = this.get("check").call(this.ribs, selected);
+        }
+        return allow;
+      };
+
+      Action.prototype.activate = function(selected) {
+        if (selected == null) {
+          selected = this.getSelected();
+        }
+        return this.get("activate").call(this.ribs, selected);
+      };
+
+      Action.prototype.getSelected = function() {
+        return this.ribs.getSelected();
+      };
+
+      return Action;
+
+    })(Backbone.Model);
+    Ribs.BatchAction = (function(_super) {
+
+      __extends(BatchAction, _super);
+
+      function BatchAction() {
+        return BatchAction.__super__.constructor.apply(this, arguments);
+      }
+
+      BatchAction.prototype.tagName = "li";
+
+      BatchAction.prototype.className = "action";
+
+      BatchAction.prototype.events = {
+        'click': 'activate',
+        'keypress': 'keypressed'
+      };
+
+      BatchAction.prototype.render = function() {
+        var btn, label;
+        label = this.label();
+        btn = $("<div/>", {
+          "class": "button",
+          title: label,
+          html: label
+        });
+        this.$el.html(btn);
+        return this.checkRequirements();
+      };
+
+      BatchAction.prototype.label = function() {
+        var label, _ref;
+        label = (_ref = this.model.get("batchLabel")) != null ? _ref : this.model.get("label");
+        if (this.model.has("hotkey")) {
+          label = this.constructor.highlightHotkey(label, this.model.get("hotkey"));
+        }
+        return label;
+      };
+
+      BatchAction.prototype.getSelected = function() {
+        return this.model.getSelected();
+      };
+
+      BatchAction.prototype.checkRequirements = function() {
+        return this.setEnabled(this.model.allowed(this.getSelected()));
+      };
+
+      BatchAction.prototype.setEnabled = function(enabled) {
+        var idx;
+        this.$el.toggleClass("disabled", !enabled);
+        idx = enabled ? 0 : -1;
+        return this.$(".button").attr("tabindex", idx);
+      };
+
+      BatchAction.prototype.activate = function(event) {
+        console.log(this.getSelected());
+        this.model.activate(this.getSelected());
+        return false;
+      };
+
+      BatchAction.prototype.keypressed = function(event) {
+        if (event.which === 13) {
+          this.activate();
+          return false;
+        }
+      };
+
+      BatchAction.highlightHotkey = function(label, hotkey) {
+        var new_label, template;
+        template = _.template("<span class='hotkey'><strong><%= hotkey %></strong></span>");
+        new_label = label.replace(hotkey, template({
+          hotkey: hotkey
+        }));
+        if (new_label === label) {
+          new_label = "" + label + " " + (template({
+            hotkey: "[" + hotkey + "]"
+          }));
+        }
+        return new_label;
+      };
+
+      return BatchAction;
+
+    })(Backbone.View);
+    Ribs.InlineAction = (function(_super) {
+
+      __extends(InlineAction, _super);
+
+      function InlineAction() {
+        return InlineAction.__super__.constructor.apply(this, arguments);
+      }
+
+      InlineAction.prototype.label = function() {
+        var label, _ref;
+        label = (_ref = this.model.get("inlineLabel")) != null ? _ref : this.model.get("label");
+        if (_.isFunction(label)) {
+          label = label.call(this.model, this.options.listItem.model);
+        }
+        return label;
+      };
+
+      InlineAction.prototype.getSelected = function() {
+        return [this.options.listItem.model];
+      };
+
+      return InlineAction;
+
+    })(Ribs.BatchAction);
     Ribs.KeyboardManager = (function() {
 
       KeyboardManager.prototype.boundCharCodes = {};
@@ -1172,33 +1207,34 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, h1, li, namespace, ul, view, _ref, _results;
+        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
         this.$el.empty();
         _ref = this.options.views;
         _results = [];
         for (namespace in _ref) {
           view = _ref[namespace];
           if (!$(view.el).is(":hidden")) {
-            h1 = $.el.h1(view.label);
-            ul = $.el.ul();
-            this.$el.append(h1, ul);
-            _results.push((function() {
-              var _i, _len, _ref1, _results1;
-              _ref1 = view.bindings;
-              _results1 = [];
-              for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-                binding = _ref1[_i];
-                li = $.el.li({
-                  "class": "hotkey"
-                }, $.el.span({
-                  "class": "key"
-                }, binding.hotkey), $.el.span({
-                  "class": "action"
-                }, binding.label));
-                _results1.push($(ul).append(li));
-              }
-              return _results1;
-            })());
+            h1 = $("<h1/>", {
+              text: view.label
+            });
+            ul = $("<ul/>");
+            _ref1 = view.bindings;
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              binding = _ref1[_i];
+              li = $("<li/>", {
+                "class": "hotkey"
+              });
+              li.append($("<span/>", {
+                "class": "key",
+                text: binding.hotkey
+              }));
+              li.append($("<span/>", {
+                "class": "action",
+                text: binding.label
+              }));
+              ul.append(li);
+            }
+            _results.push(this.$el.append(h1, ul));
           } else {
             _results.push(void 0);
           }

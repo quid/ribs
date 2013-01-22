@@ -11,8 +11,8 @@ renders a given collection and set of actions.
 Documentation
 -------------
 
-Unfortunately we haven't written a tonne of official documentation yet.
-However you can feel free to look at the [annotated source](http://quid.github.com/ribs/ribs.coffee.html).
+There isn't much official documentation yet.
+You can feel free to look at the [annotated source](http://quid.github.com/ribs/ribs.coffee.html).
 
 Another good way to learn how to use Ribs is to look at the 
 [annotated source of our demo application](http://quid.github.com/ribs/demo/todos.js.html) 
@@ -26,7 +26,6 @@ Depenencies
 + [jquery.js](http://jquery.com)
 + [underscore.js](http://underscorejs.org)
 + [backbone.js](http://backbonejs.org)
-+ [laconic.js](http://joestelmach.github.com/laconic)
 
 Downloads
 ---------

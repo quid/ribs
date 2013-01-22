@@ -23,7 +23,7 @@
             // This set of attributes determines what are shown as columns.
             displayAttributes: [
                 {
-                    label: "",
+                    label: "todo",
                     field: "name",
                     editable: true
                 },
@@ -73,7 +73,6 @@
                     hotkey: "c",
                     activate: function(selected) {
                         _.each(selected, function(model) {
-                            console.log(model);
                             model.set("completed", true);
                         });
                     }
