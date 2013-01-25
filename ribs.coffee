@@ -376,9 +376,9 @@ do ($=jQuery) ->
                 view.render() 
         
         initializeList: ->
+            @_listSubviews = []
             $list = $ "<ul/>", class: "list"
             $list
-            @_listSubviews = []
 
         renderList: ->
             for view in @_listSubviews

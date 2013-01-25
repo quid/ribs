@@ -498,12 +498,11 @@
 
       List.prototype.initializeList = function() {
         var $list;
+        this._listSubviews = [];
         $list = $("<ul/>", {
           "class": "list"
         });
-        $list;
-
-        return this._listSubviews = [];
+        return $list;
       };
 
       List.prototype.renderList = function() {
