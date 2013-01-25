@@ -686,9 +686,9 @@ do ($=jQuery) ->
     
             allow
 
-        activate: (selected)->
+        activate: (selected, listItem)->
             selected = @getSelected() unless selected?
-            @get("activate").call @ribs, selected
+            @get("activate").call @ribs, selected, listItem
 
         getSelected: ->
             @ribs.getSelected()
@@ -723,6 +723,9 @@ do ($=jQuery) ->
 
         getSelected: ->
             @model.getSelected()
+
+        getListItem: ->
+            undefined
   
         checkRequirements: ->
             @setEnabled @model.allowed @getSelected()
@@ -733,8 +736,7 @@ do ($=jQuery) ->
             @$(".button").attr "tabindex", idx
 
         activate: (event) ->
-            console.log @getSelected()
-            @model.activate @getSelected()
+            @model.activate @getSelected(), @getListItem()
             false
 
         keypressed : (event) ->
@@ -760,6 +762,9 @@ do ($=jQuery) ->
 
         getSelected: ->
             [ @options.listItem.model ]
+
+        getListItem: ->
+            @options.listItem
 
     class Ribs.KeyboardManager
     

@@ -924,11 +924,11 @@
         return allow;
       };
 
-      Action.prototype.activate = function(selected) {
+      Action.prototype.activate = function(selected, listItem) {
         if (selected == null) {
           selected = this.getSelected();
         }
-        return this.get("activate").call(this.ribs, selected);
+        return this.get("activate").call(this.ribs, selected, listItem);
       };
 
       Action.prototype.getSelected = function() {
@@ -980,6 +980,10 @@
         return this.model.getSelected();
       };
 
+      BatchAction.prototype.getListItem = function() {
+        return void 0;
+      };
+
       BatchAction.prototype.checkRequirements = function() {
         return this.setEnabled(this.model.allowed(this.getSelected()));
       };
@@ -992,8 +996,7 @@
       };
 
       BatchAction.prototype.activate = function(event) {
-        console.log(this.getSelected());
-        this.model.activate(this.getSelected());
+        this.model.activate(this.getSelected(), this.getListItem());
         return false;
       };
 
@@ -1040,6 +1043,10 @@
 
       InlineAction.prototype.getSelected = function() {
         return [this.options.listItem.model];
+      };
+
+      InlineAction.prototype.getListItem = function() {
+        return this.options.listItem;
       };
 
       return InlineAction;
