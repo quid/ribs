@@ -64,8 +64,6 @@ do ($=jQuery) ->
                 @[l] = @["initialize#{t}"]() unless @["suppress#{t}"]
                 @$el.append @[l]
 
-            @updateHeaderArrows @sortingBy
-
             @setCollection @collection if @collection?
 
         render: ->
@@ -75,18 +73,26 @@ do ($=jQuery) ->
         setCollection: (collection)->
             @collection = collection
 
-            # Unbind events
-            @collection.off "selected deselected reset add remove", null, this
+            # Unbind all events
+            @collection.off "selected deselected sort reset add remove", null, this
+
             # Bind events to collection
             @collection.on "add", @addItem, this
             @collection.on "sort reset", @addAllItems, this
-            @collection.on "reset", @render, this
-            @collection.on "selected deselected add remove", @renderActions, this
-            @collection.on "selected deselected add remove", @renderHeader, this
-            @collection.on "selected deselected add remove", @renderFooter, this
 
-            # Add items from collection to view.
+            # rerender actions, footer, header etc. when list selection changes
+            for t in ["Actions", "Footer", "Header"]
+                fn = @["render#{t}"]
+                if not @["suppress#{t}"] and _.isFunction fn
+                    @collection.on "selected deselected add remove", fn, this
+
+            # render everything on reset
+            @collection.on "reset", @render, this
+
             @addAllItems()
+
+            @updateHeaderArrows @sortingBy unless @suppressHeader
+
 
         getSelected : ->
             return [] unless @$list?

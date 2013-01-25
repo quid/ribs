@@ -76,7 +76,6 @@
           }
           this.$el.append(this[l]);
         }
-        this.updateHeaderArrows(this.sortingBy);
         if (this.collection != null) {
           return this.setCollection(this.collection);
         }
@@ -98,15 +97,24 @@
       };
 
       List.prototype.setCollection = function(collection) {
+        var fn, t, _i, _len, _ref;
         this.collection = collection;
-        this.collection.off("selected deselected reset add remove", null, this);
+        this.collection.off("selected deselected sort reset add remove", null, this);
         this.collection.on("add", this.addItem, this);
         this.collection.on("sort reset", this.addAllItems, this);
+        _ref = ["Actions", "Footer", "Header"];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          t = _ref[_i];
+          fn = this["render" + t];
+          if (!this["suppress" + t] && _.isFunction(fn)) {
+            this.collection.on("selected deselected add remove", fn, this);
+          }
+        }
         this.collection.on("reset", this.render, this);
-        this.collection.on("selected deselected add remove", this.renderActions, this);
-        this.collection.on("selected deselected add remove", this.renderHeader, this);
-        this.collection.on("selected deselected add remove", this.renderFooter, this);
-        return this.addAllItems();
+        this.addAllItems();
+        if (!this.suppressHeader) {
+          return this.updateHeaderArrows(this.sortingBy);
+        }
       };
 
       List.prototype.getSelected = function() {
@@ -898,7 +906,7 @@
         l = selected.length;
         allow = false;
         if (this.get("arity") != null) {
-          a = this.options.arity;
+          a = this.get("arity");
           r1 = a === l;
           r2 = a === -1;
           allow = r1 || r2;
