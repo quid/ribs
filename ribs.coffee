@@ -378,6 +378,7 @@ do ($=jQuery) ->
         initializeList: ->
             $list = $ "<ul/>", class: "list"
             $list
+            @_listSubviews = []
 
         renderList: ->
             for view in @_listSubviews
@@ -652,14 +653,15 @@ do ($=jQuery) ->
 
             @ribs = options.view
 
-            @ribs.keyboardManager.registerHotKey
-                hotkey: @get "hotkey"
-                label: @get "label"
-                namespace: @ribs.keyboardNamespace
-                context: this
-                precondition: @allowed
-                callback: =>
-                    @activate()
+            if @has "hotkey"
+                @ribs.keyboardManager.registerHotKey
+                    hotkey: @get "hotkey"
+                    label: @get "label"
+                    namespace: @ribs.keyboardNamespace
+                    context: this
+                    precondition: @allowed
+                    callback: =>
+                        @activate()
     
         allowed : (selected) ->
 

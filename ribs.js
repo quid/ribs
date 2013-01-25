@@ -501,7 +501,9 @@
         $list = $("<ul/>", {
           "class": "list"
         });
-        return $list;
+        $list;
+
+        return this._listSubviews = [];
       };
 
       List.prototype.renderList = function() {
@@ -886,16 +888,18 @@
       Action.prototype.initialize = function(attributes, options) {
         var _this = this;
         this.ribs = options.view;
-        return this.ribs.keyboardManager.registerHotKey({
-          hotkey: this.get("hotkey"),
-          label: this.get("label"),
-          namespace: this.ribs.keyboardNamespace,
-          context: this,
-          precondition: this.allowed,
-          callback: function() {
-            return _this.activate();
-          }
-        });
+        if (this.has("hotkey")) {
+          return this.ribs.keyboardManager.registerHotKey({
+            hotkey: this.get("hotkey"),
+            label: this.get("label"),
+            namespace: this.ribs.keyboardNamespace,
+            context: this,
+            precondition: this.allowed,
+            callback: function() {
+              return _this.activate();
+            }
+          });
+        }
       };
 
       Action.prototype.allowed = function(selected) {
