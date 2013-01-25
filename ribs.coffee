@@ -120,13 +120,13 @@ do ($=jQuery) ->
             unless @suppressToggle
                 @$(".item:focus").trigger "toggle"
 
-        toggleSelected : ->
+        toggleSelected : (e)->
             if @selectedByDefault is true 
-                @$list.find(".item.selected").trigger "deselect", silent: true
+                @$list.find(".item.selected").trigger "selectitem", silent: true
                 @selectedByDefault = false
                 @collection?.trigger "deselected"
             else
-                @$list.find(".item:not(.selected)").trigger "select", silent: true
+                @$list.find(".item:not(.selected)").trigger "selectitem", silent: true
                 @selectedByDefault = true
                 @collection?.trigger "selected"
 
@@ -134,7 +134,7 @@ do ($=jQuery) ->
             toSelect = @$list.find(":not(.item.selected)")
             toDeselect = @$list.find(".item.selected")
             toSelect.trigger "select"
-            toDeselect.trigger "deselect"
+            toDeselect.trigger "deselectitem"
     
         toggleVisibility : ->
             @$header.find(".maximize, .minimize").toggle()
@@ -441,8 +441,8 @@ do ($=jQuery) ->
         _ribsEvents:
             'click' : 'toggle'
             'toggle' : 'toggle'
-            'select' : 'select'
-            'deselect' : 'deselect'
+            'selectitem' : 'select'
+            'deselectitem' : 'deselect'
             'click a' : 'stopPropogation'
 
         constructor : (options) ->
@@ -469,6 +469,7 @@ do ($=jQuery) ->
                 @model.on 'remove', @remove, this
   
         render : ->
+
             @$el.empty()
             return unless @model
             @$el.data("cid", @model.cid)
@@ -548,6 +549,8 @@ do ($=jQuery) ->
     
         _ribsEvents:
             'click .edit' : 'edit'
+            'click .editableField' : 'stopPropagation'
+            'keypress .editableField' : 'handleKeypress'
             'blur .editableField' : 'saveEditedField'
   
         constructor : (options) ->
@@ -557,7 +560,6 @@ do ($=jQuery) ->
             _.extend this, options # TODO remove this
             super options
             @$el.addClass(@options.class ? @options.field)
-            @model.on "change change:#{@options.field}", @render, this
 
         renderableValue: (nomap) ->
             # first check if it is a top level attribute
@@ -589,14 +591,14 @@ do ($=jQuery) ->
 
                 @$el.append(editableEl) 
 
-            return this
+            this
 
-        edit: ->
+        edit: (event) ->
             if @options.editable
                 value = @model.get @options.field
 
                 if _.isFunction @options.editable
-                    editField = $ @options.editable.call this, value, @model
+                    editField = @options.editable.call this, value, @model
                 else if _.isArray @options.editable
                     editField = $ "<select/>"
                     for option in @options.editable
@@ -619,23 +621,32 @@ do ($=jQuery) ->
                         value: value 
 
                 if editField
-                    editField.addClass "editableField"
+                    $(editField).addClass "editableField"
                     @$el.html editField
-                    @delegateEvents()
-                    editField.focus()
+                    $(editField).focus()
 
-            return false
+            false
 
-        saveEditedField: (e) ->
-            field = $(e.target)
-            value = field.val()
+        stopPropagation: (e) ->
+            false
+
+        saveEditedField: ->
+            value = @$(".editableField").val()
             changeSet = {}
             changeSet[@options.field] = value
+            # do whatever it takes to re-render
             try
-                @model.save changeSet,
-                    wait: true
+                @model.save changeSet, 
+                    quiet: true
+                    success: => @render()
+                    error: => @render()
             catch e
                 @render()
+        
+        handleKeypress: (e)->
+            if e.which is 13
+                @saveEditedField()
+                false
 
 
     class Ribs.Action extends Backbone.Model
@@ -722,7 +733,7 @@ do ($=jQuery) ->
             @model.getSelected()
 
         getListItem: ->
-            undefined
+            # override
   
         checkRequirements: ->
             @setEnabled @model.allowed @getSelected()

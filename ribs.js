@@ -164,16 +164,16 @@
         }
       };
 
-      List.prototype.toggleSelected = function() {
+      List.prototype.toggleSelected = function(e) {
         var _ref, _ref1;
         if (this.selectedByDefault === true) {
-          this.$list.find(".item.selected").trigger("deselect", {
+          this.$list.find(".item.selected").trigger("selectitem", {
             silent: true
           });
           this.selectedByDefault = false;
           return (_ref = this.collection) != null ? _ref.trigger("deselected") : void 0;
         } else {
-          this.$list.find(".item:not(.selected)").trigger("select", {
+          this.$list.find(".item:not(.selected)").trigger("selectitem", {
             silent: true
           });
           this.selectedByDefault = true;
@@ -186,7 +186,7 @@
         toSelect = this.$list.find(":not(.item.selected)");
         toDeselect = this.$list.find(".item.selected");
         toSelect.trigger("select");
-        return toDeselect.trigger("deselect");
+        return toDeselect.trigger("deselectitem");
       };
 
       List.prototype.toggleVisibility = function() {
@@ -602,8 +602,8 @@
       ListItem.prototype._ribsEvents = {
         'click': 'toggle',
         'toggle': 'toggle',
-        'select': 'select',
-        'deselect': 'deselect',
+        'selectitem': 'select',
+        'deselectitem': 'deselect',
         'click a': 'stopPropogation'
       };
 
@@ -755,6 +755,8 @@
 
       ListItemCell.prototype._ribsEvents = {
         'click .edit': 'edit',
+        'click .editableField': 'stopPropagation',
+        'keypress .editableField': 'handleKeypress',
         'blur .editableField': 'saveEditedField'
       };
 
@@ -765,7 +767,6 @@
         _.extend(this, options);
         ListItemCell.__super__.constructor.call(this, options);
         this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
-        this.model.on("change change:" + this.options.field, this.render, this);
       }
 
       ListItemCell.prototype.renderableValue = function(nomap) {
@@ -802,12 +803,12 @@
         return this;
       };
 
-      ListItemCell.prototype.edit = function() {
+      ListItemCell.prototype.edit = function(event) {
         var editField, key, option, optionEl, value, _i, _len, _ref, _ref1;
         if (this.options.editable) {
           value = this.model.get(this.options.field);
           if (_.isFunction(this.options.editable)) {
-            editField = $(this.options.editable.call(this, value, this.model));
+            editField = this.options.editable.call(this, value, this.model);
           } else if (_.isArray(this.options.editable)) {
             editField = $("<select/>");
             _ref = this.options.editable;
@@ -839,27 +840,43 @@
             });
           }
           if (editField) {
-            editField.addClass("editableField");
+            $(editField).addClass("editableField");
             this.$el.html(editField);
-            this.delegateEvents();
-            editField.focus();
+            $(editField).focus();
           }
         }
         return false;
       };
 
-      ListItemCell.prototype.saveEditedField = function(e) {
-        var changeSet, field, value;
-        field = $(e.target);
-        value = field.val();
+      ListItemCell.prototype.stopPropagation = function(e) {
+        return false;
+      };
+
+      ListItemCell.prototype.saveEditedField = function() {
+        var changeSet, value,
+          _this = this;
+        value = this.$(".editableField").val();
         changeSet = {};
         changeSet[this.options.field] = value;
         try {
           return this.model.save(changeSet, {
-            wait: true
+            quiet: true,
+            success: function() {
+              return _this.render();
+            },
+            error: function() {
+              return _this.render();
+            }
           });
         } catch (e) {
           return this.render();
+        }
+      };
+
+      ListItemCell.prototype.handleKeypress = function(e) {
+        if (e.which === 13) {
+          this.saveEditedField();
+          return false;
         }
       };
 
@@ -977,9 +994,7 @@
         return this.model.getSelected();
       };
 
-      BatchAction.prototype.getListItem = function() {
-        return void 0;
-      };
+      BatchAction.prototype.getListItem = function() {};
 
       BatchAction.prototype.checkRequirements = function() {
         return this.setEnabled(this.model.allowed(this.getSelected()));
