@@ -191,15 +191,12 @@
 
       List.prototype.toggleVisibility = function() {
         this.$header.find(".maximize, .minimize").toggle();
-        if (this.$el.attr("class") == null) {
-          this.$el.attr("class", "");
-        }
         return this.$el.toggleClass("minimized", 100);
       };
 
       List.prototype.sortByField = function(event) {
         var dir, field, old_field;
-        field = $(event.target).attr("data-sort-by");
+        field = $(event.target).prop("data-sort-by");
         if ((field != null) && (this.collection != null)) {
           old_field = this.sortingBy;
           this.sortingBy = field;
@@ -569,7 +566,7 @@
         isChecked = n !== 0;
         isTransparent = isChecked && n < l;
         opacity = isTransparent ? 0.5 : 1;
-        return this.$header.find(".toggle input").attr("checked", isChecked).css("opacity", opacity);
+        return this.$header.find(".toggle input").prop("checked", isChecked).css("opacity", opacity);
       };
 
       List.prototype.initializeFooter = function() {
@@ -650,7 +647,7 @@
             tabindex: -1
           });
           if (this.$el.is(".selected")) {
-            $(toggle).attr("checked", true);
+            $(toggle).prop("checked", true);
           }
           div = $("<div/>", {
             "class": "toggle"
@@ -706,7 +703,7 @@
           return;
         }
         this.$el.addClass("selected");
-        this.$("input:checkbox").attr("checked", "checked");
+        this.$("input:checkbox").prop("checked", true);
         if (!options.silent) {
           return this.model.trigger("selected");
         }
@@ -720,7 +717,7 @@
           return;
         }
         this.$el.removeClass("selected");
-        this.$("input:checkbox").removeAttr("checked");
+        this.$("input:checkbox").prop("checked", false);
         if (!options.silent) {
           return this.model.trigger("deselected");
         }
@@ -728,15 +725,15 @@
 
       ListItem.prototype.enable = function() {
         this.$el.removeClass("disabled");
-        this.$("input:checkbox").removeAttr("disabled");
-        this.$el.attr("tabindex", 0);
+        this.$("input:checkbox").prop("disabled", false);
+        this.$el.prop("tabindex", 0);
         return this.model.trigger("enabled");
       };
 
       ListItem.prototype.disable = function() {
         this.$el.addClass("disabled");
-        this.$("input:checkbox").attr("disabled", "disabled");
-        this.$el.attr("tabindex", -1);
+        this.$("input:checkbox").prop("disabled", true);
+        this.$el.prop("tabindex", -1);
         return this.model.trigger("disabled");
       };
 
@@ -992,7 +989,7 @@
         var idx;
         this.$el.toggleClass("disabled", !enabled);
         idx = enabled ? 0 : -1;
-        return this.$(".button").attr("tabindex", idx);
+        return this.$(".button").prop("tabindex", idx);
       };
 
       BatchAction.prototype.activate = function(event) {

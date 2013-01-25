@@ -139,13 +139,10 @@ do ($=jQuery) ->
         toggleVisibility : ->
             @$header.find(".maximize, .minimize").toggle()
 
-            # Workaround for bug http://bugs.jqueryui.com/ticket/8113
-            @$el.attr("class", "") unless @$el.attr("class")?
-
             @$el.toggleClass "minimized", 100
 
         sortByField: (event) ->
-            field = $(event.target).attr("data-sort-by")
+            field = $(event.target).prop "data-sort-by"
             if field? and @collection?
                 old_field = @sortingBy
                 @sortingBy = field
@@ -419,7 +416,7 @@ do ($=jQuery) ->
             isTransparent = isChecked and n < l
             opacity = if isTransparent then 0.5 else 1
             @$header.find(".toggle input")
-                .attr("checked", isChecked)
+                .prop("checked", isChecked)
                 .css("opacity", opacity)
 
         initializeFooter: ->
@@ -481,7 +478,7 @@ do ($=jQuery) ->
                     type: "checkbox"
                     tabindex: -1
                 if @$el.is ".selected"
-                    $(toggle).attr "checked", true
+                    $(toggle).prop "checked", true
                 div = $ "<div/>", class: "toggle"
                 div.append toggle
                 @$el.append div
@@ -517,25 +514,25 @@ do ($=jQuery) ->
         select: (event, options={})->
             return if @view.suppressToggle
             @$el.addClass "selected"
-            @$("input:checkbox").attr "checked", "checked"
+            @$("input:checkbox").prop "checked", true
             @model.trigger "selected" unless options.silent
 
         deselect : (event, options={})->
             return if @view.suppressToggle
             @$el.removeClass "selected"
-            @$("input:checkbox").removeAttr "checked"
+            @$("input:checkbox").prop "checked", false
             @model.trigger "deselected" unless options.silent
 
         enable : ->
             @$el.removeClass "disabled"
-            @$("input:checkbox").removeAttr "disabled"
-            @$el.attr("tabindex", 0)
+            @$("input:checkbox").prop "disabled", false
+            @$el.prop "tabindex", 0
             @model.trigger "enabled"
 
         disable :-> 
             @$el.addClass "disabled"
-            @$("input:checkbox").attr "disabled", "disabled"
-            @$el.attr("tabindex", -1)
+            @$("input:checkbox").prop "disabled", true
+            @$el.prop "tabindex", -1
             @model.trigger "disabled"
 
         remove: ->
@@ -733,7 +730,7 @@ do ($=jQuery) ->
         setEnabled : (enabled) ->
             @$el.toggleClass "disabled", not enabled
             idx = if enabled then 0 else -1
-            @$(".button").attr "tabindex", idx
+            @$(".button").prop "tabindex", idx
 
         activate: (event) ->
             @model.activate @getSelected(), @getListItem()
