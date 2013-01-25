@@ -664,7 +664,7 @@ do ($=jQuery) ->
             allow = false
     
             if @get("arity")?
-                a = @options.arity
+                a = @get "arity"
                 r1 = a is l       # arity is same as #selected
                 r2 = a is -1      # arity is anything
                 allow = r1 or r2
