@@ -15,7 +15,7 @@ do ($=jQuery) ->
             'keypress' : 'keypressed'
             'focusin' : 'focusin'
             'focusout' : 'focusout'
-            'click .header .toggle' : 'toggleSelected'
+            'click .header .toggle input' : 'toggleSelected'
             'click .maximize .minimize' : 'toggleVisibility'
             'click [data-sort-by]' : 'sortByField'
 
@@ -122,7 +122,7 @@ do ($=jQuery) ->
 
         toggleSelected : (e)->
             if @selectedByDefault is true 
-                @$list.find(".item.selected").trigger "selectitem", silent: true
+                @$list.find(".item.selected").trigger "deselectitem", silent: true
                 @selectedByDefault = false
                 @collection?.trigger "deselected"
             else
@@ -142,7 +142,7 @@ do ($=jQuery) ->
             @$el.toggleClass "minimized", 100
 
         sortByField: (event) ->
-            field = $(event.target).prop "data-sort-by"
+            field = $(event.target).attr "data-sort-by"
             if field? and @collection?
                 old_field = @sortingBy
                 @sortingBy = field
@@ -199,6 +199,7 @@ do ($=jQuery) ->
             # Put arrows on currently sorted label.
             el = $ "<span />", class: "arrow", text: @sortArrows[dir]
             @$header.find("[data-sort-by='#{field}']").append el
+
     
         initializeHotKeys: ->
 
@@ -387,7 +388,6 @@ do ($=jQuery) ->
             unless @suppressToggle
                 toggle = $ "<input />", 
                     type: "checkbox", 
-                    tabindex: -1
                     checked: @selectedByDefault
                 $header.append $ "<div />", class:"toggle", html: toggle
 

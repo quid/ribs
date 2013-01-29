@@ -18,7 +18,7 @@
         'keypress': 'keypressed',
         'focusin': 'focusin',
         'focusout': 'focusout',
-        'click .header .toggle': 'toggleSelected',
+        'click .header .toggle input': 'toggleSelected',
         'click .maximize .minimize': 'toggleVisibility',
         'click [data-sort-by]': 'sortByField'
       };
@@ -167,7 +167,7 @@
       List.prototype.toggleSelected = function(e) {
         var _ref, _ref1;
         if (this.selectedByDefault === true) {
-          this.$list.find(".item.selected").trigger("selectitem", {
+          this.$list.find(".item.selected").trigger("deselectitem", {
             silent: true
           });
           this.selectedByDefault = false;
@@ -196,7 +196,7 @@
 
       List.prototype.sortByField = function(event) {
         var dir, field, old_field;
-        field = $(event.target).prop("data-sort-by");
+        field = $(event.target).attr("data-sort-by");
         if ((field != null) && (this.collection != null)) {
           old_field = this.sortingBy;
           this.sortingBy = field;
@@ -522,7 +522,6 @@
         if (!this.suppressToggle) {
           toggle = $("<input />", {
             type: "checkbox",
-            tabindex: -1,
             checked: this.selectedByDefault
           });
           $header.append($("<div />", {
@@ -965,7 +964,7 @@
       BatchAction.prototype.className = "action";
 
       BatchAction.prototype.events = {
-        'click': 'activate',
+        'click': 'activateIfAllowed',
         'keypress': 'keypressed'
       };
 
@@ -1005,6 +1004,13 @@
         this.$el.toggleClass("disabled", !enabled);
         idx = enabled ? 0 : -1;
         return this.$(".button").prop("tabindex", idx);
+      };
+
+      BatchAction.prototype.activateIfAllowed = function(event) {
+        if (!this.$el.is(".disabled")) {
+          this.model.activate(this.getSelected(), this.getListItem());
+        }
+        return false;
       };
 
       BatchAction.prototype.activate = function(event) {
