@@ -708,7 +708,7 @@ do ($=jQuery) ->
         className: "action"
     
         events:
-            'click': 'activate'
+            'click': 'activateIfAllowed'
             'keypress': 'keypressed'
   
         render : ->
@@ -742,6 +742,11 @@ do ($=jQuery) ->
             @$el.toggleClass "disabled", not enabled
             idx = if enabled then 0 else -1
             @$(".button").prop "tabindex", idx
+
+        activateIfAllowed: (event) ->
+            unless @$el.is ".disabled"
+                @model.activate @getSelected(), @getListItem()
+            false
 
         activate: (event) ->
             @model.activate @getSelected(), @getListItem()
