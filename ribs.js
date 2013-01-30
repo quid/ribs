@@ -220,13 +220,13 @@
             var a, b, da, db;
             a = ma.get(field);
             da = _this.displayAttributeMap[field];
-            if (da.map != null) {
-              a = da.map(a);
+            if (_.isFunction(da.map)) {
+              a = da.map.call(_this, a, ma);
             }
             b = mb.get(field);
             db = _this.displayAttributeMap[field];
-            if (db.map != null) {
-              b = db.map(b);
+            if (_.isFunction(db.map)) {
+              b = db.map.call(_this, b, mb);
             }
             if ((a != null ? a.toLowerCase : void 0) != null) {
               a = a.toLowerCase();
@@ -763,7 +763,6 @@
         var _ref;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
-        _.extend(this, options);
         ListItemCell.__super__.constructor.call(this, options);
         this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
       }
@@ -771,46 +770,46 @@
       ListItemCell.prototype.renderableValue = function(nomap) {
         var value;
         value = this.model.get(this.options.field);
-        if ((this.options.map != null) && !nomap) {
-          value = this.options.map(value, this.model, this.$el);
+        if (!nomap && _.isFunction(this.options.map)) {
+          value = this.options.map.call(this.options.view.view, value, this.model);
         }
         return value;
       };
 
       ListItemCell.prototype.render = function() {
-        var editableEl, label, _ref, _ref1;
+        var editBtnEl, label, _ref, _ref1;
         this.$el.empty();
-        if (this.options.escape) {
-          this.$el.text(this.renderableValue());
-        } else {
+        if (this.options.escape === false) {
           this.$el.html(this.renderableValue());
+        } else {
+          this.$el.text(this.renderableValue());
         }
-        if (this.editable) {
+        if (this.editable === true) {
           label = (_ref = this.options.label) != null ? _ref : this.options.field;
-          editableEl = $("<span/>", {
+          editBtnEl = $("<span/>", {
             "class": 'edit button inline',
             title: "Edit " + label,
             text: '✎'
           });
-          if ((_ref1 = this.model.get(this.options.field)) === null || _ref1 === '') {
-            $(editableEl).addClass('show');
+          if ((_ref1 = this.model.get(this.options.field)) === (void 0) || _ref1 === null || _ref1 === '') {
+            $(editBtnEl).addClass('show');
           } else {
-            $(editableEl).removeClass('show');
+            $(editBtnEl).removeClass('show');
           }
-          this.$el.append(editableEl);
+          this.$el.append(editBtnEl);
         }
         return this;
       };
 
       ListItemCell.prototype.edit = function(event) {
         var editField, key, option, optionEl, value, _i, _len, _ref, _ref1;
-        if (this.options.editable) {
+        if (this.options.editable === true) {
           value = this.model.get(this.options.field);
-          if (_.isFunction(this.options.editable)) {
-            editField = this.options.editable.call(this, value, this.model);
-          } else if (_.isArray(this.options.editable)) {
+          if (_.isFunction(this.options.edit)) {
+            editField = this.options.edit.call(this, value, this.model);
+          } else if (_.isArray(this.options.edit)) {
             editField = $("<select/>");
-            _ref = this.options.editable;
+            _ref = this.options.edit;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               option = _ref[_i];
               optionEl = $("<option/>", {
@@ -820,9 +819,9 @@
               });
               editField.append(optionEl);
             }
-          } else if (_.isObject(this.options.editable)) {
+          } else if (_.isObject(this.options.edit)) {
             editField = $("<select/>");
-            _ref1 = this.options.editable;
+            _ref1 = this.options.edit;
             for (key in _ref1) {
               option = _ref1[key];
               optionEl = $("<option/>", {
@@ -838,7 +837,7 @@
               value: value
             });
           }
-          if (editField) {
+          if (_.isElement(editField) || editField instanceof jQuery) {
             $(editField).addClass("editableField");
             this.$el.html(editField);
             $(editField).focus();
@@ -852,23 +851,28 @@
       };
 
       ListItemCell.prototype.saveEditedField = function() {
-        var changeSet, value,
+        var changeSet, editField, value,
           _this = this;
-        value = this.$(".editableField").val();
-        changeSet = {};
-        changeSet[this.options.field] = value;
-        try {
-          return this.model.save(changeSet, {
-            quiet: true,
-            success: function() {
-              return _this.render();
-            },
-            error: function() {
-              return _this.render();
-            }
-          });
-        } catch (e) {
-          return this.render();
+        editField = this.$(".editableField");
+        if (_.isFunction(this.options.save)) {
+          return this.options.save.call(this, editField, this.model);
+        } else {
+          value = editField.val();
+          changeSet = {};
+          changeSet[this.options.field] = value;
+          try {
+            return this.model.save(changeSet, {
+              quiet: true,
+              success: function() {
+                return _this.render();
+              },
+              error: function() {
+                return _this.render();
+              }
+            });
+          } catch (e) {
+            return this.render();
+          }
         }
       };
 

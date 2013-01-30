@@ -168,13 +168,13 @@ do ($=jQuery) ->
                     # first check if it is a top level attribute
                     a = ma.get field
                     da = @displayAttributeMap[field]
-                    if da.map?
-                        a = da.map a
+                    if _.isFunction da.map
+                        a = da.map.call @, a, ma
 
                     b = mb.get field
                     db = @displayAttributeMap[field]
-                    if db.map?
-                        b = db.map b
+                    if _.isFunction db.map
+                        b = db.map.call @, b, mb
 
                     # make string sorting case insensitive
                     a = a.toLowerCase() if a?.toLowerCase?
@@ -305,10 +305,10 @@ do ($=jQuery) ->
                 itemView = @itemView
             else
                 itemView = @itemView(model)
-            view = new itemView( model: model, view: this )
+            view = new itemView model: model, view: this
 
             # Respect collection insertion order
-            idx = @collection.indexOf(model)
+            idx = @collection.indexOf model
             if @$list.children().size() in [0, idx]
                 @$list.append view.el
             else
@@ -557,70 +557,75 @@ do ($=jQuery) ->
 
             @events ||= {}
             _.extend @events, @_ribsEvents
-            _.extend this, options # TODO remove this
             super options
             @$el.addClass(@options.class ? @options.field)
 
         renderableValue: (nomap) ->
-            # first check if it is a top level attribute
-            value = @model.get(@options.field)
-            # else see if it is a nested attribute
-            value = @options.map value, @model, @$el if @options.map? and !nomap
+             
+            value = @model.get @options.field
+
+            if !nomap and _.isFunction @options.map
+                value = @options.map.call @options.view.view, value, @model
             value
 
         render: ()->
             @$el.empty()
 
-            # cells are rendered as html by default
-            # unless escape is set 
-            if @options.escape
-                @$el.text(@renderableValue())
+            # cells are rendered as text by default unless `escape` is false
+            if @options.escape is false
+                @$el.html @renderableValue()
             else
-                @$el.html(@renderableValue())
+                @$el.text @renderableValue()
 
-            if @editable
+            if @editable is true
                 label = @options.label ? @options.field
-                editableEl = $ "<span/>",
+                editBtnEl = $ "<span/>",
                     class: 'edit button inline', 
                     title: "Edit #{label}"
                     text: '✎'
-                if @model.get(@options.field) in [null, '']
-                    $(editableEl).addClass('show')
+                if @model.get(@options.field) in [undefined, null, '']
+                    $(editBtnEl).addClass('show')
                 else
-                    $(editableEl).removeClass('show')
+                    $(editBtnEl).removeClass('show')
 
-                @$el.append(editableEl) 
+                @$el.append(editBtnEl) 
 
             this
 
         edit: (event) ->
-            if @options.editable
+
+            if @options.editable is true
+
                 value = @model.get @options.field
 
-                if _.isFunction @options.editable
-                    editField = @options.editable.call this, value, @model
-                else if _.isArray @options.editable
+                if _.isFunction @options.edit
+                    # edit = function could return an html element
+                    editField = @options.edit.call this, value, @model
+                else if _.isArray @options.edit 
+                    # edit = array will give a select box
                     editField = $ "<select/>"
-                    for option in @options.editable
+                    for option in @options.edit
                         optionEl = $ "<option/>", 
                             value: option
                             text: option
                             selected: options is value
                         editField.append optionEl
-                else if _.isObject @options.editable
+                else if _.isObject @options.edit  
+                    # edit = object will give a select box
                     editField = $ "<select/>"
-                    for key, option of @options.editable
+                    for key, option of @options.edit
                         optionEl = $ "<option/>", 
                             value: key
                             text: option
                             selected: key is value
                         editField.append optionEl
-                else
+                else 
+                    # no edit property will default to a text box
                     editField = $ "<input/>", 
                         type: 'text'
                         value: value 
 
-                if editField
+                if _.isElement(editField) or editField instanceof jQuery
                     $(editField).addClass "editableField"
                     @$el.html editField
                     $(editField).focus()
@@ -631,17 +636,21 @@ do ($=jQuery) ->
             false
 
         saveEditedField: ->
-            value = @$(".editableField").val()
-            changeSet = {}
-            changeSet[@options.field] = value
-            # do whatever it takes to re-render
-            try
-                @model.save changeSet, 
-                    quiet: true
-                    success: => @render()
-                    error: => @render()
-            catch e
-                @render()
+            editField = @$(".editableField")
+            if _.isFunction @options.save
+                @options.save.call this, editField, @model
+            else
+                value = editField.val()
+                changeSet = {}
+                changeSet[@options.field] = value
+                # do whatever it takes to re-render
+                try
+                    @model.save changeSet, 
+                        quiet: true
+                        success: => @render()
+                        error: => @render()
+                catch e
+                    @render()
         
         handleKeypress: (e)->
             if e.which is 13

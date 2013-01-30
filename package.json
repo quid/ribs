@@ -1,7 +1,7 @@
 {
     "name": "ribs", 
-    "version": "0.1.0",
-    "description": "Ribs is basically a high utility list widget (Backbone view).",
+    "version": "0.1.1",
+    "description": "Ribs is a high utility list widget.",
     "contributors": [
         "Joey Hobbs <joey@quid.com>",
         "Sam Dalton <sam@quid.com>"

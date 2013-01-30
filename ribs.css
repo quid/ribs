@@ -11,7 +11,6 @@
     display: inline-block;
     margin: 0 20px 0 0;
     text-transform: capitalize;
-    /*font-variant: small-caps; */ 
 }
 .ribs.minimized .list {
     height: 2px;
@@ -106,6 +105,12 @@
     margin: 0 0 0 4px;
     padding: 1px 3px;
 }
+.edit.button.inline.show, .item:hover .edit.button.inline {
+    display: inline;
+}
+.edit.button.inline {
+    display: none;
+}
 .ribs .header {
     border: 1px solid #aaaaaa;
     border-top-left-radius: 4px;
@@ -165,17 +170,4 @@
 .ribs-keyboard-shortcuts-overlay .key {
     display: inline-block;
     width: 30px;
-}
-.ribs-keyboard-shortcuts-overlay .jump:first-letter {
-    color: #cccccc;
-}
-.item:hover .edit.button.inline {
-    display: inline;
-}
-.edit.button.inline {
-    display: none;
-}
-.ribs-editing {
-    background: white;
-    font-style: italic;
 }
