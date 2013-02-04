@@ -577,7 +577,7 @@ do ($=jQuery) ->
             else
                 @$el.text @renderableValue()
 
-            if @editable is true
+            if @options.editable is true
                 label = @options.label ? @options.field
                 editBtnEl = $ "<span/>",
                     class: 'edit button inline', 

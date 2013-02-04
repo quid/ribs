@@ -784,7 +784,7 @@
         } else {
           this.$el.text(this.renderableValue());
         }
-        if (this.editable === true) {
+        if (this.options.editable === true) {
           label = (_ref = this.options.label) != null ? _ref : this.options.field;
           editBtnEl = $("<span/>", {
             "class": 'edit button inline',
