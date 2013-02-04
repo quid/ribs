@@ -608,7 +608,7 @@ do ($=jQuery) ->
                         optionEl = $ "<option/>", 
                             value: option
                             text: option
-                            selected: options is value
+                            selected: option is value
                         editField.append optionEl
                 else if _.isObject @options.edit  
                     # edit = object will give a select box

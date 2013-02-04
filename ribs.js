@@ -815,7 +815,7 @@
               optionEl = $("<option/>", {
                 value: option,
                 text: option,
-                selected: options === value
+                selected: option === value
               });
               editField.append(optionEl);
             }
