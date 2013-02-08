@@ -634,7 +634,7 @@
       }
 
       ListItem.prototype.render = function() {
-        var action, cell, div, inlineAction, key, obj, toggle, ul, _i, _len, _ref, _ref1;
+        var action, cell, div, inlineAction, key, toggle, ul, _i, _len, _ref, _ref1;
         this.$el.empty();
         if (!this.model) {
           return;
@@ -661,7 +661,6 @@
           cell.delegateEvents();
           this.$el.append(cell.el);
         }
-        obj = this.model.toJSON();
         ul = $("<ul/>", {
           "class": "actions"
         });

@@ -489,7 +489,6 @@ do ($=jQuery) ->
                 cell.render()
                 cell.delegateEvents()
                 @$el.append cell.el
-            obj = @model.toJSON()
 
             # Add inline actions.
             ul = $ "<ul/>", class: "actions"
