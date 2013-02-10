@@ -64,23 +64,23 @@ do ($=jQuery) ->
             @build()
 
         remove: ->
-            super()
             @removeSubviews()
+            super()
 
         removeSubviews:  ->
             _.each @_listSubviews, (subview) ->
                 subview.remove()
-        
+            @_listSubviews = []
+
         build: ->
 
-            @removeSubviews()
             @$el.empty()
 
             for t in @renderOrder
                 l = t.replace /^./, "$#{t[0].toLowerCase()}"
                 @[l] = @["initialize#{t}"]() unless @["suppress#{t}"] or @[l]?
                 @$el.append @[l]
-
+            
             @setCollection @collection if @collection?
 
         render: ->
@@ -333,7 +333,7 @@ do ($=jQuery) ->
             view.select() if @selectedByDefault
 
         addAllItems : ->
-            @_listSubviews = []
+            @removeSubviews()
             @$list.empty()
             @collection?.each @addItem, this
 
@@ -387,7 +387,6 @@ do ($=jQuery) ->
                 view.render() 
         
         initializeList: ->
-            @_listSubviews = []
             $list = $ "<ul/>", class: "list"
             $list
 
@@ -562,6 +561,10 @@ do ($=jQuery) ->
 
         remove: ->
             @deselect()
+            for inlineAction in @inlineActions
+                inlineAction.remove()
+            for listItemCell in @listItemCell
+                listItemCell.remove()
             super()
 
 
