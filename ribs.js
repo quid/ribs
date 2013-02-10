@@ -119,7 +119,7 @@
         this.collection = collection;
         this.stopListening(this.collection);
         this.listenTo(this.collection, "add", this.addItem);
-        this.listenTo(this.collection, "sort reset", this.addAllItem);
+        this.listenTo(this.collection, "sort reset", this.addAllItems);
         _ref = ["Actions", "Footer", "Header"];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           t = _ref[_i];

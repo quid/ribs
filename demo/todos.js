@@ -125,7 +125,7 @@
         // Render the Ribs list.
         todos_view.render();
         $("a[href=#showKeyboardBindings]").click(function() {
-            Ribs.List.keyboardManager.showKeyboardBindings();
+            Ribs.keyboardManager.showKeyboardBindings();
             return false;
         });
         

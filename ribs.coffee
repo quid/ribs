@@ -96,7 +96,7 @@ do ($=jQuery) ->
 
             # Bind events to collection
             @listenTo @collection, "add", @addItem
-            @listenTo @collection, "sort reset", @addAllItem
+            @listenTo @collection, "sort reset", @addAllItems
 
             # rerender actions, footer, header etc. when list selection changes
             for t in ["Actions", "Footer", "Header"]
