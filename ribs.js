@@ -100,6 +100,7 @@
 
       List.prototype.build = function() {
         var l, t, _i, _len, _ref;
+        this.removeAllSubviews();
         this.$el.empty();
         _ref = this.renderOrder;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {

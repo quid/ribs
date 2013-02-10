@@ -83,6 +83,7 @@ do ($=jQuery) ->
 
         build: ->
 
+            @removeAllSubviews()
             @$el.empty()
 
             for t in @renderOrder
