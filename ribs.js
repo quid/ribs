@@ -74,15 +74,28 @@
       };
 
       List.prototype.remove = function() {
-        this.removeSubviews();
+        this.removeAllSubviews();
         return List.__super__.remove.call(this);
       };
 
-      List.prototype.removeSubviews = function() {
-        _.each(this._listSubviews, function(subview) {
-          return subview.remove();
-        });
-        return this._listSubviews = [];
+      List.prototype.removeAllSubviews = function() {
+        this.removeSubviews("list");
+        return this.removeSubviews("action");
+      };
+
+      List.prototype.removeSubviews = function(type) {
+        var l, subview, _i, _len;
+        if (l = this.subviews(type)) {
+          for (_i = 0, _len = l.length; _i < _len; _i++) {
+            subview = l[_i];
+            subview.remove();
+          }
+        }
+        return this["_" + type + "Subviews"] = [];
+      };
+
+      List.prototype.subviews = function(type) {
+        return this["_" + type + "Subviews"];
       };
 
       List.prototype.build = function() {
@@ -423,7 +436,7 @@
         if (this.$el.is(":visible")) {
           view.render();
         }
-        this._listSubviews.push(view);
+        this.subviews("list").push(view);
         if (this.selectedByDefault) {
           return view.select();
         }
@@ -431,19 +444,19 @@
 
       List.prototype.addAllItems = function() {
         var _ref;
-        this.removeSubviews();
+        this.removeSubviews("list");
         this.$list.empty();
         return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
       };
 
       List.prototype.get = function(id) {
-        return _.find(this._listSubviews, function(view) {
+        return _.find(this.subviews("list"), function(view) {
           return view.model.id === id;
         });
       };
 
       List.prototype.getByCid = function(cid) {
-        return _.find(this._listSubviews, function(view) {
+        return _.find(this.subviews("list"), function(view) {
           return view.model.cid === cid;
         });
       };
@@ -469,7 +482,7 @@
         this.batchActions = [];
         this.inlineActions = [];
         this.allActions = [];
-        this._actionSubviews = [];
+        this.removeSubviews("action");
         $batchActions = $("<ul/>", {
           "class": "actions"
         });
@@ -487,7 +500,7 @@
             view = new _this.actionView({
               model: action
             });
-            _this._actionSubviews.push(view);
+            _this.subviews("action").push(view);
             $batchActions.append(view.el);
             return view.render();
           }
@@ -497,7 +510,7 @@
 
       List.prototype.renderActions = function() {
         var view, _i, _len, _ref, _results;
-        _ref = this._actionSubviews;
+        _ref = this.subviews("action");
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           view = _ref[_i];
@@ -516,7 +529,7 @@
 
       List.prototype.renderList = function() {
         var view, _i, _len, _ref, _results;
-        _ref = this._listSubviews;
+        _ref = this.subviews("list");
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           view = _ref[_i];
@@ -768,7 +781,7 @@
           inlineAction = _ref[_i];
           inlineAction.remove();
         }
-        _ref1 = this.listItemCell;
+        _ref1 = this.listItemCells;
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           listItemCell = _ref1[_j];
           listItemCell.remove();
