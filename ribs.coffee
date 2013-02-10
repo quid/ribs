@@ -53,19 +53,19 @@ do ($=jQuery) ->
             Ribs.keyboardManager ?= new Ribs.KeyboardManager()
             @keyboardManager = Ribs.keyboardManager
 
-            super options
+            super
       
             @initializeHotKeys()
 
             @$el.addClass('ribs')
 
-        setElement: (element, delegate) ->
-            super element, delegate
+        setElement: ->
+            super
             @build()
 
         remove: ->
             @removeAllSubviews()
-            super()
+            super
 
         removeAllSubviews: ->
             @removeSubviews "list"
@@ -495,7 +495,7 @@ do ($=jQuery) ->
                         listItem: this
                     @inlineActions.push inlineAction
 
-            super options
+            super
 
             if @model?
                 @listenTo @model, "change", @render
@@ -575,7 +575,7 @@ do ($=jQuery) ->
                 inlineAction.remove()
             for listItemCell in @listItemCells
                 listItemCell.remove()
-            super()
+            super
 
 
     class Ribs.ListItemCell extends Backbone.View
@@ -594,7 +594,7 @@ do ($=jQuery) ->
 
             @events ||= {}
             _.extend @events, @_ribsEvents
-            super options
+            super
             @$el.addClass(@options.class ? @options.field)
 
         renderableValue: (nomap) ->
@@ -957,7 +957,7 @@ do ($=jQuery) ->
 
         remove: ->
             $(window).off "keyup", @handleKeyup
-            super arguments
+            super
 
         handleKeyup: (event) =>
             # __<return>__ or __<esc>__ will remove overlay.

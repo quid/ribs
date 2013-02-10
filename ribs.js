@@ -63,19 +63,19 @@
           Ribs.keyboardManager = new Ribs.KeyboardManager();
         }
         this.keyboardManager = Ribs.keyboardManager;
-        List.__super__.constructor.call(this, options);
+        List.__super__.constructor.apply(this, arguments);
         this.initializeHotKeys();
         this.$el.addClass('ribs');
       }
 
-      List.prototype.setElement = function(element, delegate) {
-        List.__super__.setElement.call(this, element, delegate);
+      List.prototype.setElement = function() {
+        List.__super__.setElement.apply(this, arguments);
         return this.build();
       };
 
       List.prototype.remove = function() {
         this.removeAllSubviews();
-        return List.__super__.remove.call(this);
+        return List.__super__.remove.apply(this, arguments);
       };
 
       List.prototype.removeAllSubviews = function() {
@@ -667,7 +667,7 @@
             this.inlineActions.push(inlineAction);
           }
         }
-        ListItem.__super__.constructor.call(this, options);
+        ListItem.__super__.constructor.apply(this, arguments);
         if (this.model != null) {
           this.listenTo(this.model, "change", this.render);
           this.listenTo(this.model, "remove", this.remove);
@@ -787,7 +787,7 @@
           listItemCell = _ref1[_j];
           listItemCell.remove();
         }
-        return ListItem.__super__.remove.call(this);
+        return ListItem.__super__.remove.apply(this, arguments);
       };
 
       return ListItem;
@@ -812,7 +812,7 @@
         var _ref;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
-        ListItemCell.__super__.constructor.call(this, options);
+        ListItemCell.__super__.constructor.apply(this, arguments);
         this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
       }
 
@@ -1292,7 +1292,7 @@
 
       KeyboardHelpView.prototype.remove = function() {
         $(window).off("keyup", this.handleKeyup);
-        return KeyboardHelpView.__super__.remove.call(this, arguments);
+        return KeyboardHelpView.__super__.remove.apply(this, arguments);
       };
 
       KeyboardHelpView.prototype.handleKeyup = function(event) {
