@@ -46,17 +46,34 @@ do ($=jQuery) ->
             @sortingDirection = {}
             @sortingBy = "id"
 
-            super options
-
             @[k] = options[k] for k in @_ribsOptions when options[k]?
+
+
+            # Lazily construct global keyboard manager
+            Ribs.keyboardManager ?= new Ribs.KeyboardManager()
+            @keyboardManager = Ribs.keyboardManager
+
+            super options
       
             @initializeHotKeys()
 
             @$el.addClass('ribs')
 
+        setElement: (element, delegate) ->
+            super element, delegate
             @build()
+
+        remove: ->
+            super()
+            @removeSubviews()
+
+        removeSubviews:  ->
+            _.each @_listSubviews, (subview) ->
+                subview.remove()
         
         build: ->
+
+            @removeSubviews()
             @$el.empty()
 
             for t in @renderOrder
@@ -75,20 +92,20 @@ do ($=jQuery) ->
             @collection = collection
 
             # Unbind all events
-            @collection.off "selected deselected sort reset add remove", null, this
+            @stopListening @collection
 
             # Bind events to collection
-            @collection.on "add", @addItem, this
-            @collection.on "sort reset", @addAllItems, this
+            @listenTo @collection, "add", @addItem
+            @listenTo @collection, "sort reset", @addAllItem
 
             # rerender actions, footer, header etc. when list selection changes
             for t in ["Actions", "Footer", "Header"]
                 fn = @["render#{t}"]
                 if not @["suppress#{t}"] and _.isFunction fn
-                    @collection.on "selected deselected add remove", fn, this
+                    @listenTo @collection, "selected deselected add remove", fn
 
             # render everything on reset
-            @collection.on "reset", @render, this
+            @listenTo @collection, "reset", @render
 
             @addAllItems()
 
@@ -203,10 +220,6 @@ do ($=jQuery) ->
 
     
         initializeHotKeys: ->
-
-            # Lazily construct global keyboard manager
-            @constructor.keyboardManager ?= new Ribs.KeyboardManager()
-            @keyboardManager = @constructor.keyboardManager
 
             # Register this view
             @keyboardNamespace = @keyboardManager.registerView this, @plural()
@@ -476,8 +489,8 @@ do ($=jQuery) ->
             super options
 
             if @model?
-                @model.on 'change', @render, this
-                @model.on 'remove', @remove, this
+                @listenTo @model, "change", @render
+                @listenTo @model, "remove", @remove
   
         render : ->
 
@@ -834,7 +847,7 @@ do ($=jQuery) ->
                 context: this
                 label: "Show hotkeys"
 
-            $(window).on "keypress", (e) => @handleKeypress(e)
+            $(window).on "keypress", @handleKeypress
 
         registerView: (view, label) ->
             namespace = _.uniqueId "view"
@@ -872,7 +885,7 @@ do ($=jQuery) ->
             @registerHotKey options
 
 
-        handleKeypress: (event, namespace="global") ->
+        handleKeypress: (event, namespace="global") =>
 
             return unless @options.enableKeyboardShortcuts
 
@@ -926,11 +939,17 @@ do ($=jQuery) ->
         events: 
             'click' : "remove"
 
-        initialize: (options) ->
+        initialize:  ->
+            $(window).on "keyup", @handleKeyup
+
+        remove: ->
+            $(window).off "keyup", @handleKeyup
+            super arguments
+
+        handleKeyup: (event) =>
             # __<return>__ or __<esc>__ will remove overlay.
-            $(window).bind 'keyup', (event) -> 
-                @remove() if event.which is 27
-                false
+            @remove() if event.which is 27
+            false
 
         render: ->
             @$el.empty()

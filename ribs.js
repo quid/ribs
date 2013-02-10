@@ -1,6 +1,7 @@
 (function() {
   var __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   (function($) {
     var root;
@@ -38,7 +39,7 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var k, _i, _len, _ref, _ref1, _ref2;
+        var k, _i, _len, _ref, _ref1, _ref2, _ref3;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
@@ -51,7 +52,6 @@
         this.events = _.extend({}, this.events, this._ribsEvents);
         this.sortingDirection = {};
         this.sortingBy = "id";
-        List.__super__.constructor.call(this, options);
         _ref2 = this._ribsOptions;
         for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
           k = _ref2[_i];
@@ -59,13 +59,34 @@
             this[k] = options[k];
           }
         }
+        if ((_ref3 = Ribs.keyboardManager) == null) {
+          Ribs.keyboardManager = new Ribs.KeyboardManager();
+        }
+        this.keyboardManager = Ribs.keyboardManager;
+        List.__super__.constructor.call(this, options);
         this.initializeHotKeys();
         this.$el.addClass('ribs');
-        this.build();
       }
+
+      List.prototype.setElement = function(element, delegate) {
+        List.__super__.setElement.call(this, element, delegate);
+        return this.build();
+      };
+
+      List.prototype.remove = function() {
+        List.__super__.remove.call(this);
+        return this.removeSubviews();
+      };
+
+      List.prototype.removeSubviews = function() {
+        return _.each(this._listSubviews, function(subview) {
+          return subview.remove();
+        });
+      };
 
       List.prototype.build = function() {
         var l, t, _i, _len, _ref;
+        this.removeSubviews();
         this.$el.empty();
         _ref = this.renderOrder;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -96,18 +117,18 @@
       List.prototype.setCollection = function(collection) {
         var fn, t, _i, _len, _ref;
         this.collection = collection;
-        this.collection.off("selected deselected sort reset add remove", null, this);
-        this.collection.on("add", this.addItem, this);
-        this.collection.on("sort reset", this.addAllItems, this);
+        this.stopListening(this.collection);
+        this.listenTo(this.collection, "add", this.addItem);
+        this.listenTo(this.collection, "sort reset", this.addAllItem);
         _ref = ["Actions", "Footer", "Header"];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           t = _ref[_i];
           fn = this["render" + t];
           if (!this["suppress" + t] && _.isFunction(fn)) {
-            this.collection.on("selected deselected add remove", fn, this);
+            this.listenTo(this.collection, "selected deselected add remove", fn);
           }
         }
-        this.collection.on("reset", this.render, this);
+        this.listenTo(this.collection, "reset", this.render);
         this.addAllItems();
         if (!this.suppressHeader) {
           return this.updateHeaderArrows(this.sortingBy);
@@ -260,12 +281,8 @@
       };
 
       List.prototype.initializeHotKeys = function() {
-        var hotkey, hotkeys, _base, _i, _len, _ref, _results,
+        var hotkey, hotkeys, _i, _len, _results,
           _this = this;
-        if ((_ref = (_base = this.constructor).keyboardManager) == null) {
-          _base.keyboardManager = new Ribs.KeyboardManager();
-        }
-        this.keyboardManager = this.constructor.keyboardManager;
         this.keyboardNamespace = this.keyboardManager.registerView(this, this.plural());
         if (this.jumpkey != null) {
           this.keyboardManager.registerJumpKey({
@@ -639,8 +656,8 @@
         }
         ListItem.__super__.constructor.call(this, options);
         if (this.model != null) {
-          this.model.on('change', this.render, this);
-          this.model.on('remove', this.remove, this);
+          this.listenTo(this.model, "change", this.render);
+          this.listenTo(this.model, "remove", this.remove);
         }
       }
 
@@ -1103,7 +1120,7 @@
       };
 
       function KeyboardManager(options) {
-        var _this = this;
+        this.handleKeypress = __bind(this.handleKeypress, this);
         this.options = _.extend(this.options, options);
         this.registerHotKey({
           hotkey: "?",
@@ -1111,9 +1128,7 @@
           context: this,
           label: "Show hotkeys"
         });
-        $(window).on("keypress", function(e) {
-          return _this.handleKeypress(e);
-        });
+        $(window).on("keypress", this.handleKeypress);
       }
 
       KeyboardManager.prototype.registerView = function(view, label) {
@@ -1237,6 +1252,7 @@
       __extends(KeyboardHelpView, _super);
 
       function KeyboardHelpView() {
+        this.handleKeyup = __bind(this.handleKeyup, this);
         return KeyboardHelpView.__super__.constructor.apply(this, arguments);
       }
 
@@ -1246,13 +1262,20 @@
         'click': "remove"
       };
 
-      KeyboardHelpView.prototype.initialize = function(options) {
-        return $(window).bind('keyup', function(event) {
-          if (event.which === 27) {
-            this.remove();
-          }
-          return false;
-        });
+      KeyboardHelpView.prototype.initialize = function() {
+        return $(window).on("keyup", this.handleKeyup);
+      };
+
+      KeyboardHelpView.prototype.remove = function() {
+        $(window).off("keyup", this.handleKeyup);
+        return KeyboardHelpView.__super__.remove.call(this, arguments);
+      };
+
+      KeyboardHelpView.prototype.handleKeyup = function(event) {
+        if (event.which === 27) {
+          this.remove();
+        }
+        return false;
       };
 
       KeyboardHelpView.prototype.render = function() {
