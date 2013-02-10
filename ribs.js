@@ -71,7 +71,7 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           t = _ref[_i];
           l = t.replace(/^./, "$" + (t[0].toLowerCase()));
-          if (!this["suppress" + t]) {
+          if (!(this["suppress" + t] || (this[l] != null))) {
             this[l] = this["initialize" + t]();
           }
           this.$el.append(this[l]);
@@ -82,18 +82,15 @@
       };
 
       List.prototype.render = function() {
-        var t, _i, _len, _ref, _results;
+        var t, _i, _len, _ref;
         _ref = this.renderOrder;
-        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           t = _ref[_i];
           if (!this["suppress" + t]) {
-            _results.push(this["render" + t]());
-          } else {
-            _results.push(void 0);
+            this["render" + t]();
           }
         }
-        return _results;
+        return this;
       };
 
       List.prototype.setCollection = function(collection) {
@@ -406,7 +403,6 @@
         } else {
           this.$list.children(":nth-child(" + (idx + 1) + ")").before(view.el);
         }
-        view.delegateEvents();
         if (this.$el.is(":visible")) {
           view.render();
         }
@@ -508,7 +504,9 @@
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           view = _ref[_i];
-          _results.push(view.render());
+          view.undelegateEvents();
+          view.render();
+          _results.push(view.delegateEvents());
         }
         return _results;
       };
@@ -607,7 +605,7 @@
       };
 
       function ListItem(options) {
-        var attribute, _i, _len, _ref, _ref1, _ref2;
+        var action, attribute, inlineAction, key, listItemCell, _i, _len, _ref, _ref1, _ref2, _ref3;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
         if ((_ref = this.itemCellView) == null) {
@@ -624,7 +622,20 @@
           attribute = _.clone(attribute);
           attribute.view = this;
           attribute.model = options.model;
-          this.listItemCells.push(new this.itemCellView(attribute));
+          listItemCell = new this.itemCellView(attribute);
+          this.listItemCells.push(listItemCell);
+        }
+        this.inlineActions = [];
+        _ref3 = this.view.inlineActions;
+        for (key in _ref3) {
+          action = _ref3[key];
+          if (!((action.filter != null) && action.filter(this.model) === false)) {
+            inlineAction = new this.actionView({
+              model: action,
+              listItem: this
+            });
+            this.inlineActions.push(inlineAction);
+          }
         }
         ListItem.__super__.constructor.call(this, options);
         if (this.model != null) {
@@ -634,7 +645,7 @@
       }
 
       ListItem.prototype.render = function() {
-        var action, cell, div, inlineAction, key, toggle, ul, _i, _len, _ref, _ref1;
+        var cell, div, inlineAction, toggle, ul, _i, _j, _len, _len1, _ref, _ref1;
         this.$el.empty();
         if (!this.model) {
           return;
@@ -657,26 +668,24 @@
         _ref = this.listItemCells;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           cell = _ref[_i];
+          cell.undelegateEvents();
+          this.$el.append(cell.el);
           cell.render();
           cell.delegateEvents();
-          this.$el.append(cell.el);
         }
         ul = $("<ul/>", {
           "class": "actions"
         });
-        _ref1 = this.view.inlineActions;
-        for (key in _ref1) {
-          action = _ref1[key];
-          if (!((action.filter != null) && action.filter(this.model) === false)) {
-            inlineAction = new this.actionView({
-              model: action,
-              listItem: this
-            });
-            inlineAction.render();
-            $(ul).append(inlineAction.el);
-          }
+        _ref1 = this.inlineActions;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          inlineAction = _ref1[_j];
+          inlineAction.undelegateEvents();
+          $(ul).append(inlineAction.el);
+          inlineAction.render();
+          inlineAction.delegateEvents();
         }
-        return this.$el.append(ul);
+        this.$el.append(ul);
+        return this;
       };
 
       ListItem.prototype.toggle = function() {
@@ -980,7 +989,8 @@
           html: label
         });
         this.$el.html(btn);
-        return this.checkRequirements();
+        this.checkRequirements();
+        return this;
       };
 
       BatchAction.prototype.label = function() {

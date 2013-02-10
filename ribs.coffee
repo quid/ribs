@@ -61,7 +61,7 @@ do ($=jQuery) ->
 
             for t in @renderOrder
                 l = t.replace /^./, "$#{t[0].toLowerCase()}"
-                @[l] = @["initialize#{t}"]() unless @["suppress#{t}"]
+                @[l] = @["initialize#{t}"]() unless @["suppress#{t}"] or @[l]?
                 @$el.append @[l]
 
             @setCollection @collection if @collection?
@@ -69,6 +69,7 @@ do ($=jQuery) ->
         render: ->
             for t in @renderOrder
                 @["render#{t}"]() unless @["suppress#{t}"]
+            this
         
         setCollection: (collection)->
             @collection = collection
@@ -314,7 +315,6 @@ do ($=jQuery) ->
             else
                 @$list.children(":nth-child(#{ idx + 1 })").before view.el
 
-            view.delegateEvents()
             view.render() if @$el.is ":visible"
             @_listSubviews.push view
             view.select() if @selectedByDefault
@@ -380,7 +380,9 @@ do ($=jQuery) ->
 
         renderList: ->
             for view in @_listSubviews
+                view.undelegateEvents()
                 view.render() 
+                view.delegateEvents()
 
         initializeHeader: ->
             $header = $ "<div />", class: "header"
@@ -460,7 +462,16 @@ do ($=jQuery) ->
                 attribute = _.clone(attribute)
                 attribute.view = @
                 attribute.model = options.model
-                @listItemCells.push new @itemCellView attribute
+                listItemCell = new @itemCellView attribute
+                @listItemCells.push listItemCell
+
+            @inlineActions = []
+            for key, action of @view.inlineActions
+                unless action.filter? and action.filter(@model) is false
+                    inlineAction = new @actionView
+                        model: action
+                        listItem: this
+                    @inlineActions.push inlineAction
 
             super options
 
@@ -486,20 +497,21 @@ do ($=jQuery) ->
 
             # Render our individual cells
             for cell in @listItemCells
+                cell.undelegateEvents()
+                @$el.append cell.el
                 cell.render()
                 cell.delegateEvents()
-                @$el.append cell.el
 
             # Add inline actions.
             ul = $ "<ul/>", class: "actions"
-            for key, action of @view.inlineActions
-                unless action.filter? and action.filter(@model) is false
-                    inlineAction = new @actionView
-                        model: action
-                        listItem: this
-                    inlineAction.render()
-                    $(ul).append inlineAction.el
+            for inlineAction in @inlineActions
+                inlineAction.undelegateEvents()
+                $(ul).append inlineAction.el
+                inlineAction.render()
+                inlineAction.delegateEvents()
             @$el.append ul
+            
+            this
 
         toggle: ->
             unless @$el.is(".disabled")
@@ -730,6 +742,8 @@ do ($=jQuery) ->
             @$el.html btn
 
             @checkRequirements()
+
+            this
 
         label: ->
             label = @model.get("batchLabel") ? @model.get("label")
