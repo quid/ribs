@@ -402,7 +402,6 @@ do ($=jQuery) ->
 
         renderList: ->
             for view in @subviews("list")
-                view.undelegateEvents()
                 view.render() 
                 view.delegateEvents()
 
@@ -519,7 +518,6 @@ do ($=jQuery) ->
 
             # Render our individual cells
             for cell in @listItemCells
-                cell.undelegateEvents()
                 @$el.append cell.el
                 cell.render()
                 cell.delegateEvents()
@@ -527,7 +525,6 @@ do ($=jQuery) ->
             # Add inline actions.
             ul = $ "<ul/>", class: "actions"
             for inlineAction in @inlineActions
-                inlineAction.undelegateEvents()
                 $(ul).append inlineAction.el
                 inlineAction.render()
                 inlineAction.delegateEvents()
