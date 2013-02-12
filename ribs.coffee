@@ -600,7 +600,7 @@ do ($=jQuery) ->
 
             if !nomap and _.isFunction @options.map
                 value = @options.map.call @options.view.view, value, @model
-            value
+            value ? ""
 
         render: ()->
             @$el.empty()
