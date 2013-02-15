@@ -683,6 +683,12 @@ do ($=jQuery) ->
                 value = editField.val()
                 changeSet = {}
                 changeSet[@options.field] = value
+
+                attrs = $.extend true, changeSet, @model.attributes
+                valid = @model._validate(attrs, @model)
+                unless valid
+                    return
+
                 # do whatever it takes to re-render
                 try
                     @model.save changeSet, 
