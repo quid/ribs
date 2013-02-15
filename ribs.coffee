@@ -686,7 +686,6 @@ do ($=jQuery) ->
                 # do whatever it takes to re-render
                 try
                     @model.save changeSet, 
-                        quiet: true
                         success: => @render()
                         error: => @render()
                 catch e

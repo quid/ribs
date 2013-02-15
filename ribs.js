@@ -911,7 +911,6 @@
           changeSet[this.options.field] = value;
           try {
             return this.model.save(changeSet, {
-              quiet: true,
               success: function() {
                 return _this.render();
               },
