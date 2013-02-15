@@ -681,12 +681,10 @@ do ($=jQuery) ->
                 @options.save.call this, editField, @model
             else
                 value = editField.val()
-                changeSet = {}
+                changeSet = $.extend true, {}, @model.attributes
                 changeSet[@options.field] = value
 
-                attrs = $.extend true, changeSet, @model.attributes
-                valid = @model._validate(attrs, @model)
-                unless valid
+                unless @model._validate(changeSet, @model)
                     return
 
                 # do whatever it takes to re-render
