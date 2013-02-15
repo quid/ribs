@@ -4,6 +4,11 @@ do ($=jQuery) ->
     root = window ? module.exports
     root.Ribs = {}
 
+    _keyboardManager = null
+
+    Ribs.getKeyboardManager = ->
+        _keyboardManager =? new Ribs.KeyboardManager()
+
     # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View
   
@@ -50,12 +55,11 @@ do ($=jQuery) ->
 
 
             # Lazily construct global keyboard manager
-            Ribs.keyboardManager ?= new Ribs.KeyboardManager()
-            @keyboardManager = Ribs.keyboardManager
+            @keyboardManager = Ribs.getKeyboardManager()
+
+            @initializeHotKeys()
 
             super
-      
-            @initializeHotKeys()
 
             @$el.addClass('ribs')
 
@@ -974,4 +978,5 @@ do ($=jQuery) ->
                         li.append $ "<span/>", class: "action", text: binding.label
                         ul.append li
                     @$el.append h1, ul
+
 
