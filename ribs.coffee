@@ -24,7 +24,7 @@ do ($=jQuery) ->
             'click .maximize .minimize' : 'toggleVisibility'
             'click [data-sort-by]' : 'sortByField'
 
-        _ribsOptions: ["displayAttributes", "actions", "itemView"]
+        _ribsOptions: ["displayAttributes", "actions", "itemView", "jumpkey"]
 
         jumpSelector : ".list li:first"
     
@@ -46,7 +46,6 @@ do ($=jQuery) ->
             @itemView ?= Ribs.ListItem
             @actionView ?= Ribs.BatchAction
     
-            @options ?= options
             @events = _.extend {}, @events, @_ribsEvents
 
             @sortingDirection = {}
@@ -240,10 +239,10 @@ do ($=jQuery) ->
             @keyboardNamespace = @keyboardManager.registerView this, @plural()
 
             # Bind jump key.
-            if @options.jumpkey?
+            if @jumpkey?
                 @keyboardManager.registerJumpKey 
                     label: @plural()
-                    jumpkey: @options.jumpkey
+                    jumpkey: @jumpkey
                     context: this
                     callback: =>
                         @$(@jumpSelector).focus()
@@ -873,6 +872,9 @@ do ($=jQuery) ->
                 bindings: []
             namespace
 
+        unregisterView: (namespace) ->
+            delete @registeredViews[namespace]
+
         # options:
         #  hotkey: string (required)
         #  label: string (required - displayed in help screen)
@@ -970,7 +972,7 @@ do ($=jQuery) ->
             @$el.empty()
 
             for namespace, view of @options.views
-                unless $(view.el).is(":hidden")
+                unless $(view.context?.el).is ":hidden"
                     h1 = $ "<h1/>", text: view.label
                     ul = $ "<ul/>"
                     for binding in view.bindings

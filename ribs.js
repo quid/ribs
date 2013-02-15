@@ -28,7 +28,7 @@
         'click [data-sort-by]': 'sortByField'
       };
 
-      List.prototype._ribsOptions = ["displayAttributes", "actions", "itemView"];
+      List.prototype._ribsOptions = ["displayAttributes", "actions", "itemView", "jumpkey"];
 
       List.prototype.jumpSelector = ".list li:first";
 
@@ -43,7 +43,7 @@
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var k, _i, _len, _ref, _ref1, _ref2, _ref3;
+        var k, _i, _len, _ref, _ref1, _ref2;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
@@ -53,15 +53,12 @@
         if ((_ref1 = this.actionView) == null) {
           this.actionView = Ribs.BatchAction;
         }
-        if ((_ref2 = this.options) == null) {
-          this.options = options;
-        }
         this.events = _.extend({}, this.events, this._ribsEvents);
         this.sortingDirection = {};
         this.sortingBy = "id";
-        _ref3 = this._ribsOptions;
-        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-          k = _ref3[_i];
+        _ref2 = this._ribsOptions;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          k = _ref2[_i];
           if (options[k] != null) {
             this[k] = options[k];
           }
@@ -302,10 +299,10 @@
         var hotkey, hotkeys, _i, _len, _results,
           _this = this;
         this.keyboardNamespace = this.keyboardManager.registerView(this, this.plural());
-        if (this.options.jumpkey != null) {
+        if (this.jumpkey != null) {
           this.keyboardManager.registerJumpKey({
             label: this.plural(),
-            jumpkey: this.options.jumpkey,
+            jumpkey: this.jumpkey,
             context: this,
             callback: function() {
               return _this.$(_this.jumpSelector).focus();
@@ -1168,6 +1165,10 @@
         return namespace;
       };
 
+      KeyboardManager.prototype.unregisterView = function(namespace) {
+        return delete this.registeredViews[namespace];
+      };
+
       KeyboardManager.prototype.registerHotKey = function(options) {
         var code, i, key, ns, _i, _len, _ref, _ref1, _ref2, _ref3;
         if ((_ref = options.charCodes) == null) {
@@ -1304,20 +1305,20 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
+        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _ref2, _results;
         this.$el.empty();
         _ref = this.options.views;
         _results = [];
         for (namespace in _ref) {
           view = _ref[namespace];
-          if (!$(view.el).is(":hidden")) {
+          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden")) {
             h1 = $("<h1/>", {
               text: view.label
             });
             ul = $("<ul/>");
-            _ref1 = view.bindings;
-            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-              binding = _ref1[_i];
+            _ref2 = view.bindings;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              binding = _ref2[_i];
               li = $("<li/>", {
                 "class": "hotkey"
               });
