@@ -46,6 +46,7 @@ do ($=jQuery) ->
             @itemView ?= Ribs.ListItem
             @actionView ?= Ribs.BatchAction
     
+            @options ?= options
             @events = _.extend {}, @events, @_ribsEvents
 
             @sortingDirection = {}
@@ -239,10 +240,10 @@ do ($=jQuery) ->
             @keyboardNamespace = @keyboardManager.registerView this, @plural()
 
             # Bind jump key.
-            if @jumpkey?
+            if @options.jumpkey?
                 @keyboardManager.registerJumpKey 
                     label: @plural()
-                    jumpkey: @jumpkey
+                    jumpkey: @options.jumpkey
                     context: this
                     callback: =>
                         @$(@jumpSelector).focus()
