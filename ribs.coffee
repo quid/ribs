@@ -7,7 +7,7 @@ do ($=jQuery) ->
     _keyboardManager = null
 
     Ribs.getKeyboardManager = ->
-        _keyboardManager =? new Ribs.KeyboardManager()
+        _keyboardManager ?= new Ribs.KeyboardManager()
 
     # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View

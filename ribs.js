@@ -4,9 +4,13 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   (function($) {
-    var root;
+    var root, _keyboardManager;
     root = typeof window !== "undefined" && window !== null ? window : module.exports;
     root.Ribs = {};
+    _keyboardManager = null;
+    Ribs.getKeyboardManager = function() {
+      return _keyboardManager != null ? _keyboardManager : _keyboardManager = new Ribs.KeyboardManager();
+    };
     Ribs.List = (function(_super) {
 
       __extends(List, _super);
@@ -49,22 +53,22 @@
         if ((_ref1 = this.actionView) == null) {
           this.actionView = Ribs.BatchAction;
         }
+        if ((_ref2 = this.options) == null) {
+          this.options = options;
+        }
         this.events = _.extend({}, this.events, this._ribsEvents);
         this.sortingDirection = {};
         this.sortingBy = "id";
-        _ref2 = this._ribsOptions;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          k = _ref2[_i];
+        _ref3 = this._ribsOptions;
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          k = _ref3[_i];
           if (options[k] != null) {
             this[k] = options[k];
           }
         }
-        if ((_ref3 = Ribs.keyboardManager) == null) {
-          Ribs.keyboardManager = new Ribs.KeyboardManager();
-        }
-        this.keyboardManager = Ribs.keyboardManager;
-        List.__super__.constructor.apply(this, arguments);
+        this.keyboardManager = Ribs.getKeyboardManager();
         this.initializeHotKeys();
+        List.__super__.constructor.apply(this, arguments);
         this.$el.addClass('ribs');
       }
 
@@ -298,10 +302,10 @@
         var hotkey, hotkeys, _i, _len, _results,
           _this = this;
         this.keyboardNamespace = this.keyboardManager.registerView(this, this.plural());
-        if (this.jumpkey != null) {
+        if (this.options.jumpkey != null) {
           this.keyboardManager.registerJumpKey({
             label: this.plural(),
-            jumpkey: this.jumpkey,
+            jumpkey: this.options.jumpkey,
             context: this,
             callback: function() {
               return _this.$(_this.jumpSelector).focus();
@@ -534,7 +538,6 @@
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           view = _ref[_i];
-          view.undelegateEvents();
           view.render();
           _results.push(view.delegateEvents());
         }
@@ -698,7 +701,6 @@
         _ref = this.listItemCells;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           cell = _ref[_i];
-          cell.undelegateEvents();
           this.$el.append(cell.el);
           cell.render();
           cell.delegateEvents();
@@ -709,7 +711,6 @@
         _ref1 = this.inlineActions;
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           inlineAction = _ref1[_j];
-          inlineAction.undelegateEvents();
           $(ul).append(inlineAction.el);
           inlineAction.render();
           inlineAction.delegateEvents();
@@ -822,7 +823,7 @@
         if (!nomap && _.isFunction(this.options.map)) {
           value = this.options.map.call(this.options.view.view, value, this.model);
         }
-        return value;
+        return value != null ? value : "";
       };
 
       ListItemCell.prototype.render = function() {
