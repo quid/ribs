@@ -312,64 +312,66 @@
             }
           });
         }
-        hotkeys = [
-          {
-            hotkey: "j",
-            label: "Focus next item",
-            callback: function() {
-              return $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus();
+        if (!this.suppressHotKeys) {
+          hotkeys = [
+            {
+              hotkey: "j",
+              label: "Focus next item",
+              callback: function() {
+                return $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus();
+              }
+            }, {
+              hotkey: "J",
+              label: "Focus last item",
+              callback: function() {
+                return _this.$list.find(".item:last").focus();
+              }
+            }, {
+              hotkey: "k",
+              label: "Focus previous item",
+              callback: function() {
+                return $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus();
+              }
+            }, {
+              hotkey: "K",
+              label: "Focus first item",
+              callback: function() {
+                return _this.$list.find(".item:first").focus();
+              }
+            }, {
+              hotkey: "x",
+              label: "Select/deselect item",
+              callback: function() {
+                return _this.toggleFocussedSelected();
+              }
+            }, {
+              hotkey: "X",
+              label: "Select/deselect all",
+              callback: function() {
+                return _this.toggleSelected();
+              }
+            }, {
+              hotkey: "_",
+              label: "Expand/collapse list",
+              callback: function() {
+                return _this.toggleVisibility();
+              }
+            }, {
+              hotkey: "R",
+              label: "Refresh items",
+              callback: function() {
+                return _this.refresh();
+              }
             }
-          }, {
-            hotkey: "J",
-            label: "Focus last item",
-            callback: function() {
-              return _this.$list.find(".item:last").focus();
-            }
-          }, {
-            hotkey: "k",
-            label: "Focus previous item",
-            callback: function() {
-              return $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus();
-            }
-          }, {
-            hotkey: "K",
-            label: "Focus first item",
-            callback: function() {
-              return _this.$list.find(".item:first").focus();
-            }
-          }, {
-            hotkey: "x",
-            label: "Select/deselect item",
-            callback: function() {
-              return _this.toggleFocussedSelected();
-            }
-          }, {
-            hotkey: "X",
-            label: "Select/deselect all",
-            callback: function() {
-              return _this.toggleSelected();
-            }
-          }, {
-            hotkey: "_",
-            label: "Expand/collapse list",
-            callback: function() {
-              return _this.toggleVisibility();
-            }
-          }, {
-            hotkey: "R",
-            label: "Refresh items",
-            callback: function() {
-              return _this.refresh();
-            }
+          ];
+          _results = [];
+          for (_i = 0, _len = hotkeys.length; _i < _len; _i++) {
+            hotkey = hotkeys[_i];
+            hotkey.namespace = this.keyboardNamespace;
+            _results.push(this.keyboardManager.registerHotKey(hotkey));
           }
-        ];
-        _results = [];
-        for (_i = 0, _len = hotkeys.length; _i < _len; _i++) {
-          hotkey = hotkeys[_i];
-          hotkey.namespace = this.keyboardNamespace;
-          _results.push(this.keyboardManager.registerHotKey(hotkey));
+          return _results;
         }
-        return _results;
       };
 
       List.prototype.keypressed = function(event) {
@@ -951,7 +953,7 @@
       Action.prototype.initialize = function(attributes, options) {
         var _this = this;
         this.ribs = options.view;
-        if (this.has("hotkey")) {
+        if (this.has("hotkey") && !this.ribs.suppressHotKeys) {
           return this.ribs.keyboardManager.registerHotKey({
             hotkey: this.get("hotkey"),
             label: this.get("label"),

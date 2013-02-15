@@ -249,53 +249,55 @@ do ($=jQuery) ->
                     precondition: =>
                         @$el.is ":visible"
 
-            hotkeys = [
-                hotkey: "j"
-                label: "Focus next item"
-                callback: =>
-                    $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus()
-            ,
-                hotkey: "J"
-                label: "Focus last item"
-                callback: =>
-                    @$list.find(".item:last").focus()
-            ,
-                hotkey: "k" 
-                label: "Focus previous item"
-                callback: =>
-                    $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus()
-            ,
-                hotkey: "K"
-                label: "Focus first item"
-                callback: =>
-                    @$list.find(".item:first").focus()
-            ,
-                hotkey: "x"
-                label: "Select/deselect item"
-                callback: =>
-                    @toggleFocussedSelected()
-            ,
-                hotkey: "X"
-                label: "Select/deselect all"
-                callback: =>
-                    @toggleSelected()
-            ,
-                hotkey: "_"
-                label: "Expand/collapse list"
-                callback: =>
-                    @toggleVisibility()
-            ,
-                hotkey: "R"
-                label: "Refresh items"
-                callback: =>
-                    # refresh collection (from server)
-                    @refresh()
-            ]
+            unless @suppressHotKeys
+
+                hotkeys = [
+                    hotkey: "j"
+                    label: "Focus next item"
+                    callback: =>
+                        $(document.activeElement).nextAll(".item:visible:not(.disabled):first").focus()
+                ,
+                    hotkey: "J"
+                    label: "Focus last item"
+                    callback: =>
+                        @$list.find(".item:last").focus()
+                ,
+                    hotkey: "k" 
+                    label: "Focus previous item"
+                    callback: =>
+                        $(document.activeElement).prevAll(".item:visible:not(.disabled):first").focus()
+                ,
+                    hotkey: "K"
+                    label: "Focus first item"
+                    callback: =>
+                        @$list.find(".item:first").focus()
+                ,
+                    hotkey: "x"
+                    label: "Select/deselect item"
+                    callback: =>
+                        @toggleFocussedSelected()
+                ,
+                    hotkey: "X"
+                    label: "Select/deselect all"
+                    callback: =>
+                        @toggleSelected()
+                ,
+                    hotkey: "_"
+                    label: "Expand/collapse list"
+                    callback: =>
+                        @toggleVisibility()
+                ,
+                    hotkey: "R"
+                    label: "Refresh items"
+                    callback: =>
+                        # refresh collection (from server)
+                        @refresh()
+                ]
 
 
-            for hotkey in hotkeys
-                hotkey.namespace = @keyboardNamespace
-                @keyboardManager.registerHotKey hotkey
+                for hotkey in hotkeys
+                    hotkey.namespace = @keyboardNamespace
+                    @keyboardManager.registerHotKey hotkey
 
         keypressed : (event) ->
             @trigger "keypressed", event
@@ -708,7 +710,7 @@ do ($=jQuery) ->
 
             @ribs = options.view
 
-            if @has "hotkey"
+            if @has("hotkey") and not @ribs.suppressHotKeys
                 @ribs.keyboardManager.registerHotKey
                     hotkey: @get "hotkey"
                     label: @get "label"
