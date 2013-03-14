@@ -1,217 +1,215 @@
 .ribs {
-    font-family: verdana, arial, sans-serif;
-    text-align: left; 
+  font-family: verdana, arial, sans-serif;
+  text-align: left;
 }
-.ribs.focussed .list {
-    /*border: 1px solid #bdf; */ 
-}
-.ribs .title {
-    font-size: 20pt;
-    font-weight: normal;
-    display: inline-block;
-    margin: 0 20px 0 0;
-    text-transform: capitalize;
-}
-.ribs.minimized .list {
-    height: 2px;
-    overflow: hidden;
-    border: 1px solid #aaaaaa; 
-}
-.ribs ul {
-    padding: 0;
-    margin: 0; 
-}
-.ribs li {
-    list-style-type: none;
-    cursor: pointer;
-    outline: none;
-    background: #eeeeee; 
-}
-.ribs .actions {
-    margin-bottom: 10px;
-    display: inline-block; 
-}
-.ribs .action > div > ul {
-    display: none;
-    position: absolute;
-    background: white;
-    border: 1px solid #aaaaaa;
-    border-radius: 5px;
-    padding: 2px;
-    left: 0;
-    top: 23px;
-    width: 150px;
-}
-
-.ribs .action:hover > .button > ul {
-    display: block;
-}
-.ribs .action:focus > .button > ul {
-    display: block;
-}
-.ribs .action > .button > ul! > .action:focus {
-    display: block;
-}
-.ribs .action .button > ul > .action {
-    background: white;
-    display: block;
-    margin-right: 0;
-    margin-bottom: 2px;
-    border-bottom: 1px solid #cccccc;
-    padding: 2px;
-}
-.ribs .action > .button > ul > .action:last-child {
-    border-bottom: 0 none;
-    margin-bottom: 0px;
-}
-.ribs .action {
-    display: inline-block;
-    margin-right: 10px; 
-    position: relative;
-}
-.ribs .button strong {
-    font-weight: normal; 
+.ribs strong {
+  font-weight: normal;
+  text-decoration: none;
 }
 .ribs.focussed strong {
-    font-weight: bold;
+  text-decoration: underline;
+}
+.ribs.minimized .list {
+  height: 2px;
+  overflow: hidden;
+  border: 1px solid #aaa;
+}
+.ribs ul {
+  padding: 0;
+  margin: 0;
+}
+.ribs li {
+  list-style-type: none;
+  cursor: pointer;
+  outline: none;
+  background: #eee;
+}
+.ribs .title {
+  font-size: 20pt;
+  font-weight: normal;
+  display: inline-block;
+  margin: 0 20px 0 0;
+  text-transform: capitalize;
+}
+.ribs .actions {
+  margin-bottom: 10px;
+  display: inline-block;
+}
+.ribs .actions .action {
+  display: inline-block;
+  margin-right: 10px;
+  position: relative;
+}
+.ribs .actions .action:focus > .button {
+  background: #4682b4;
+  color: #fff;
+  outline: none;
+}
+.ribs .actions .action:focus > .button > ul {
+  display: block;
+}
+.ribs .actions .action:hover > .button > ul {
+  display: block;
+}
+.ribs .actions .action.disabled .button {
+  color: #ccc;
+  cursor: default;
+  background: inherit;
+}
+.ribs .actions .action.disabled .button:hover {
+  background: inherit;
 }
 .ribs .button {
-    border-radius: 4px;
-    background: white;
-    border: 1px solid #aaaaaa;
-    padding: 2px 6px;
-    color: black;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #aaa;
+  padding: 2px 6px;
+  color: #000;
 }
 .ribs .button:hover {
-    background: #eee;
+  background: #eee;
 }
-.ribs .button .button {
-    border: 0 none;
-    font-size: 80%;
+.ribs .button > ul {
+  display: none;
+  position: absolute;
+  background: #fff;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  padding: 2px;
+  left: 0;
+  top: 23px;
+  width: 150px;
 }
-.ribs .action:focus > .button {
-    background: steelblue;
-    color: white;
-    outline: none;
+.ribs .button > ul > .action {
+  background: #fff;
+  display: block;
+  margin-right: 0;
+  margin-bottom: 2px;
+  border-bottom: 1px solid #ccc;
+  padding: 2px;
 }
-.ribs .disabled .button:hover {
-    background: inherit;
+.ribs .button > ul > .action:last-child {
+  border-bottom: 0 none;
+  margin-bottom: 0px;
 }
-.ribs .disabled .button {
-    color: #cccccc;
-    cursor: default;
-    background: inherit;
+.ribs .button > ul > .action > .button {
+  border: 0 none;
+  font-size: 80%;
 }
 .ribs .list {
-    border: 1px solid #aaaaaa;
-    border-bottom: 0 none;
-    overflow-y: scroll;
-    overflow-x: auto;
-}
-.ribs .item div, .ribs .header div {
-    padding: 6px 10px;
-    display: inline-block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ribs .item {
-    overflow: hidden;
-    white-space: nowrap;
-    border-top: 1px solid white;
-    border-bottom: 1px solid #aaaaaa;
-}
-.ribs .item > div:hover {
-    white-space: normal;
-    text-overflow: none;
-}
-.ribs .item:active {
-    background: #dddddd;
-}
-.ribs .item.selected:active {
-    background: #ccddee;
-}
-.ribs .item:focus {
-    border-left: 4px solid steelblue;
-}
-.ribs .item:focus > :first-child {
-    padding-left: 6px;
-}
-.ribs .item.selected {
-    background: #ddeeff;
+  border: 1px solid #aaa;
+  border-bottom: 0 none;
+  overflow-y: scroll;
+  overflow-x: auto;
 }
 .ribs .list .button {
-    font-size: 80%;
-    margin: 0 0 0 4px;
-    padding: 1px 3px;
+  font-size: 80%;
+  margin: 0 0 0 4px;
+  padding: 1px 3px;
 }
 .ribs .list .button .button {
-    font-size: 80%;
-    padding: 0;
+  font-size: 80%;
+  padding: 0;
 }
-.edit.button.inline.show, .item:hover .edit.button.inline {
-    display: inline;
+.ribs .list .edit.button.inline {
+  display: none;
 }
-.edit.button.inline {
-    display: none;
+.ribs .list .edit.button.inline.show,
+.ribs .list:hover .edit.button.inline {
+  display: inline;
+}
+.ribs .list .item {
+  overflow: hidden;
+  white-space: nowrap;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #aaa;
+}
+.ribs .list .item > div:hover {
+  white-space: normal;
+  text-overflow: none;
+}
+.ribs .list .item:active {
+  background: #ddd;
+}
+.ribs .list .item.selected {
+  background: #def;
+}
+.ribs .list .item.selected:active {
+  background: #cde;
+}
+.ribs .list .item:focus {
+  border-left: 4px solid #4682b4;
+}
+.ribs .list .item:focus > :first-child {
+  padding-left: 6px;
 }
 .ribs .header {
-    border: 1px solid #aaaaaa;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    border-bottom: 0 none;
-    background: #f8f8f8;
+  border: 1px solid #aaa;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom: 0 none;
+  background: #f8f8f8;
+}
+.ribs .header .arrow {
+  margin-left: 2px;
 }
 .ribs .footer {
-    padding: 6px 10px;
-    text-align: right;
-    background: #f8f8f8;
-    border: 1px solid #aaaaaa;
-    border-top: 0 none;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    font-size: 80%;
-    color: #666666;
+  padding: 6px 10px;
+  text-align: right;
+  background: #f8f8f8;
+  border: 1px solid #aaa;
+  border-top: 0 none;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  font-size: 80%;
+  color: #666;
 }
-
+.ribs .item div,
+.ribs .header div {
+  padding: 6px 10px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .ribs-keyboard-shortcuts-overlay {
-    position: absolute;
-    text-align: left;
-    top: 50%;
-    left: 50%;
-    margin-top: -200px;
-    margin-left: -300px;
-    height: 400px;
-    width: 600px;
-    background: rgba(0, 0, 0, 0.75);
-    border: 1px solid white;
-    border-radius: 10px;
-    -webkit-box-shadow: 0 0 40px 2px black;
-    box-shadow: 0 0 40px 2px black;
-    text-shadow: 0px 0px 3px black;
-    overflow: auto;
-    padding: 20px;
-    color: white;
-    font-family: Helvetica, Arial, sans-serif;
+  position: absolute;
+  text-align: left;
+  top: 50%;
+  left: 50%;
+  margin-top: -200px;
+  margin-left: -300px;
+  height: 400px;
+  width: 600px;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid #fff;
+  border-radius: 10px;
+  -webkit-box-shadow: 0 0 40px 2px #000;
+  box-shadow: 0 0 40px 2px #000;
+  text-shadow: 0px 0px 3px #000;
+  overflow: auto;
+  padding: 20px;
+  color: #fff;
+  font-family: Helvetica, Arial, sans-serif;
 }
 .ribs-keyboard-shortcuts-overlay h1 {
-    margin: 0 0 10px;
-    font-size: 16pt;
-    text-transform: capitalize;
-    font-variant: small-caps;
+  margin: 0 0 10px;
+  font-size: 16pt;
+  text-transform: capitalize;
+  font-variant: small-caps;
 }
 .ribs-keyboard-shortcuts-overlay ul {
-    overflow: hidden;
-    padding: 0;
+  overflow: hidden;
+  padding: 0;
 }
 .ribs-keyboard-shortcuts-overlay li {
-    list-style-type: none;
-    float: left;
-    width: 250px;
-    margin-right: 20px;
-    margin-bottom: 10px;
+  list-style-type: none;
+  float: left;
+  width: 250px;
+  margin-right: 20px;
+  margin-bottom: 10px;
 }
 .ribs-keyboard-shortcuts-overlay .key {
-    display: inline-block;
-    width: 30px;
+  display: inline-block;
+  width: 30px;
 }

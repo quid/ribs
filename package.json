@@ -1,6 +1,6 @@
 {
     "name": "ribs", 
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Ribs is a high utility list widget.",
     "contributors": [
         "Joey Hobbs <joey@quid.com>",
@@ -15,6 +15,7 @@
     "dependencies":{},
     "devDependencies":{
         "coffee-script": "*",
+        "stylus": "*",
         "uglify-js": "*",
         "docco-husky": "*"
     },

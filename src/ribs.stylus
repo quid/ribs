@@ -1,0 +1,184 @@
+.ribs
+    font-family verdana, arial, sans-serif
+    text-align left
+    strong
+        font-weight normal
+        text-decoration none
+    &.focussed strong
+        text-decoration underline
+    &.minimized
+        .list
+            height 2px
+            overflow hidden
+            border 1px solid #aaaaaa
+    ul
+        padding 0
+        margin 0
+    li
+        list-style-type none
+        cursor pointer
+        outline none
+        background #eeeeee
+
+    .title
+        font-size 20pt
+        font-weight normal
+        display inline-block
+        margin 0 20px 0 0
+        text-transform capitalize
+
+    .actions
+        margin-bottom 10px
+        display inline-block
+        .action
+            display inline-block
+            margin-right 10px
+            position relative
+            &:focus > .button
+                background steelblue
+                color white
+                outline none
+                & > ul
+                    display block
+            &:hover > .button 
+                & > ul
+                    display block
+            &.disabled
+                .button
+                    color #cccccc
+                    cursor default
+                    background inherit
+                    &:hover
+                        background inherit
+    .button
+        border-radius 4px
+        background white
+        border 1px solid #aaaaaa
+        padding 2px 6px
+        color black
+        &:hover
+            background #eee
+        & > ul
+            display none
+            position absolute
+            background white
+            border 1px solid #aaaaaa
+            border-radius 5px
+            padding 2px
+            left 0
+            top 23px
+            width 150px
+            & > .action
+                background white
+                display block
+                margin-right 0
+                margin-bottom 2px
+                border-bottom 1px solid #cccccc
+                padding 2px
+                &:last-child
+                    border-bottom 0 none
+                    margin-bottom 0px
+                & > .button
+                    border 0 none
+                    font-size 80%
+    .list
+        border 1px solid #aaaaaa
+        border-bottom 0 none
+        overflow-y scroll
+        overflow-x auto
+        .button
+            font-size 80%
+            margin 0 0 0 4px
+            padding 1px 3px
+            .button
+                font-size 80%
+                padding 0
+        .edit.button.inline
+            display none
+        .edit.button.inline.show, &:hover .edit.button.inline
+            display inline
+
+        .item
+            overflow hidden
+            white-space nowrap
+            border-top 1px solid white
+            border-bottom 1px solid #aaaaaa
+            & > div:hover
+                white-space normal
+                text-overflow none
+            &:active
+                background #dddddd
+            &.selected
+                background #ddeeff
+                &:active
+                    background #ccddee
+            &:focus
+                border-left 4px solid steelblue
+                & > :first-child
+                    padding-left 6px
+
+
+    .header
+        border 1px solid #aaaaaa
+        border-top-left-radius 4px
+        border-top-right-radius 4px
+        border-bottom 0 none
+        background #f8f8f8
+        .arrow
+            margin-left: 2px
+
+    .footer
+        padding 6px 10px
+        text-align right
+        background #f8f8f8
+        border 1px solid #aaaaaa
+        border-top 0 none
+        border-bottom-left-radius 4px
+        border-bottom-right-radius 4px
+        font-size 80%
+        color #666666
+
+    .item div, .header div
+        padding 6px 10px
+        display inline-block
+        white-space nowrap
+        overflow hidden
+        text-overflow ellipsis
+
+.ribs-keyboard-shortcuts-overlay
+    position absolute
+    text-align left
+    top 50%
+    left 50%
+    margin-top -200px
+    margin-left -300px
+    height 400px
+    width 600px
+    background rgba(0, 0, 0, 0.75)
+    border 1px solid white
+    border-radius 10px
+    -webkit-box-shadow 0 0 40px 2px black
+    box-shadow 0 0 40px 2px black
+    text-shadow 0px 0px 3px black
+    overflow auto
+    padding 20px
+    color white
+    font-family Helvetica, Arial, sans-serif
+    h1
+        margin 0 0 10px
+        font-size 16pt
+        text-transform capitalize
+        font-variant small-caps
+    ul
+        overflow hidden
+        padding 0
+    li
+        list-style-type none
+        float left
+        width 250px
+        margin-right 20px
+        margin-bottom 10px
+    .key
+        display inline-block
+        width 30px
+
