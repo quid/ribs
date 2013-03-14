@@ -31,9 +31,43 @@
     margin-bottom: 10px;
     display: inline-block; 
 }
+.ribs .action > div > ul {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #aaaaaa;
+    border-radius: 5px;
+    padding: 2px;
+    left: 0;
+    top: 23px;
+    width: 150px;
+}
+
+.ribs .action:hover > .button > ul {
+    display: block;
+}
+.ribs .action:focus > .button > ul {
+    display: block;
+}
+.ribs .action > .button > ul! > .action:focus {
+    display: block;
+}
+.ribs .action .button > ul > .action {
+    background: white;
+    display: block;
+    margin-right: 0;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #cccccc;
+    padding: 2px;
+}
+.ribs .action > .button > ul > .action:last-child {
+    border-bottom: 0 none;
+    margin-bottom: 0px;
+}
 .ribs .action {
     display: inline-block;
     margin-right: 10px; 
+    position: relative;
 }
 .ribs .button strong {
     font-weight: normal; 
@@ -46,21 +80,27 @@
     background: white;
     border: 1px solid #aaaaaa;
     padding: 2px 6px;
+    color: black;
 }
-.ribs .button:focus {
+.ribs .button:hover {
+    background: #eee;
+}
+.ribs .button .button {
+    border: 0 none;
+    font-size: 80%;
+}
+.ribs .action:focus > .button {
     background: steelblue;
     color: white;
     outline: none;
 }
+.ribs .disabled .button:hover {
+    background: inherit;
+}
 .ribs .disabled .button {
     color: #cccccc;
-    background: white;
     cursor: default;
-}
-.ribs .disabled .button:focus {
-    color: #cccccc;
-    background: white;
-    cursor: default;
+    background: inherit;
 }
 .ribs .list {
     border: 1px solid #aaaaaa;
@@ -104,6 +144,10 @@
     font-size: 80%;
     margin: 0 0 0 4px;
     padding: 1px 3px;
+}
+.ribs .list .button .button {
+    font-size: 80%;
+    padding: 0;
 }
 .edit.button.inline.show, .item:hover .edit.button.inline {
     display: inline;

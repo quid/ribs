@@ -92,16 +92,31 @@
                         });
                     }
                 },
-
+                
                 {
-                    label: "Clear selected",
-                    hotkey: "C",
-                    activate: function(selected) {
-                        c = this.collection;
-                        _.each(selected, function(model) {
-                            c.remove(model);
-                        });
-                    }
+                    label: "More ▾",
+                    actions: [
+                        {
+                            label: "Clear selected",
+                            hotkey: "C",
+                            activate: function(selected) {
+                                c = this.collection;
+                                _.each(selected, function(model) {
+                                    c.remove(model);
+                                });
+                            }
+                        },
+                        {
+                            label: "Clear completed",
+                            min: 0,
+                            activate: function(selected) {
+                                c = this.collection;
+                                _.each(c.where({completed: true}), function(model) {
+                                    c.remove(model);
+                                });
+                            }
+                        }
+                    ]
                 }
             ],
 

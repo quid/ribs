@@ -2,12 +2,7 @@ do ($=jQuery) ->
 
     # Make `Ribs` globally accessible.
     root = window ? module.exports
-    root.Ribs = {}
-
-    _keyboardManager = null
-
-    Ribs.getKeyboardManager = ->
-        _keyboardManager ?= new Ribs.KeyboardManager()
+    Ribs = root.Ribs ?= {}
 
     # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View
@@ -24,16 +19,13 @@ do ($=jQuery) ->
             'click .maximize .minimize' : 'toggleVisibility'
             'click [data-sort-by]' : 'sortByField'
 
-        _ribsOptions: ["displayAttributes", "actions", "itemView", "jumpkey"]
+        _ribsOptions: ["displayAttributes", "actions", "itemView", "itemName", "title", "jumpkey"]
 
         jumpSelector : ".list li:first"
     
         focussed : false
 
         selectedByDefault : false
-
-        stopPropogation: (e) ->
-            e.preventDefault()
 
         renderOrder: ["Title", "Actions", "Header", "List", "Footer"]
     
@@ -54,10 +46,10 @@ do ($=jQuery) ->
             @[k] = options[k] for k in @_ribsOptions when options[k]?
 
 
-            # Lazily construct global keyboard manager
-            @keyboardManager = Ribs.getKeyboardManager()
+            # Lazily construct global keyboard manager, if found
+            @keyboardManager = Ribs.getKeyboardManager?()
 
-            @initializeHotKeys()
+            @initializeHotKeys() if @keyboardManager?
 
             super
 
@@ -69,6 +61,7 @@ do ($=jQuery) ->
 
         remove: ->
             @removeAllSubviews()
+            @keyboardManager?.deregisterView @keyboardNamespace
             super
 
         removeAllSubviews: ->
@@ -327,7 +320,7 @@ do ($=jQuery) ->
                 , 10
         
         plural : ->
-            @itemNamePlural ? @itemName+"s"
+            @itemNamePlural ? @itemName + "s"
 
         
         addItem : (model) ->
@@ -376,25 +369,21 @@ do ($=jQuery) ->
         
         initializeActions: ->
             
-            @batchActions = []
-            @inlineActions = []
-            @allActions = []
             @removeSubviews "action"
 
             $batchActions = $ "<ul/>", class: "actions"
+
+            @allActions = new Ribs.Actions @actions, ribs: this
             
-            _.each @actions, (actionConfig) =>
-                action = new Ribs.Action actionConfig, view: this
-                @allActions.push action
-                if actionConfig.inline
-                    @inlineActions.push action
-                if actionConfig.batch isnt false
-                    @batchActions.push action
-                    view = new @actionView
-                        model: action
-                    @subviews("action").push view
-                    $batchActions.append view.el
-                    view.render()
+            @inlineActions = @allActions.where inline: true
+
+            @batchActions = @allActions.where batch: true
+
+            for action in @batchActions
+                view = new @actionView model: action
+                @subviews("action").push view
+                $batchActions.append view.el
+                view.render()
 
             $batchActions
 
@@ -700,7 +689,6 @@ do ($=jQuery) ->
                 @saveEditedField()
                 false
 
-
     class Ribs.Action extends Backbone.Model
 
         defaults:
@@ -708,13 +696,19 @@ do ($=jQuery) ->
             max : -1 # -1 means no maximum
             arity : null # defining arity will override min/max
             check : null # defining check will be additional to min/max/arity
+            batch: true
+            inline: false
 
         initialize: (attributes, options) ->
 
-            @ribs = options.view
+            @ribs = options.ribs ? @collection.ribs
+
+            if @has "actions"
+                @actions = new Ribs.Actions @get("actions"), ribs: @ribs
+                @min = 0
 
             if @has("hotkey") and not @ribs.suppressHotKeys
-                @ribs.keyboardManager.registerHotKey
+                @ribs.keyboardManager?.registerHotKey
                     hotkey: @get "hotkey"
                     label: @get "label"
                     namespace: @ribs.keyboardNamespace
@@ -753,6 +747,10 @@ do ($=jQuery) ->
         getSelected: ->
             @ribs.getSelected()
 
+    class Ribs.Actions extends Backbone.Collection
+
+        model: Ribs.Action
+
     class Ribs.BatchAction extends Backbone.View
   
         tagName : "li"
@@ -762,24 +760,41 @@ do ($=jQuery) ->
         events:
             'click': 'activateIfAllowed'
             'keypress': 'keypressed'
+
+        attributes:
+            tabindex: 0
   
         render : ->
-            label = @label()
 
             btn = $ "<div/>", 
                 class: "button"
-                title: label
-                html: label
+                title: @label(false)
+                html: @label()
 
             @$el.html btn
 
-            @checkRequirements()
+            if @model.actions
+
+                cont = $ "<ul/>", 
+                    class: "dropdown"
+                    title: @label(false)
+
+                @model.actions.each (action) ->
+                    view = new Ribs.BatchAction model: action
+                    $(cont).append view.el
+                    view.render()
+
+                $(btn).append cont
+
+            else
+
+                @checkRequirements()
 
             this
 
-        label: ->
+        label: (highlight=true)->
             label = @model.get("batchLabel") ? @model.get("label")
-            if @model.has "hotkey"
+            if highlight and @model.has "hotkey"
                 label = @constructor.highlightHotkey label, @model.get "hotkey"
             label
 
@@ -795,7 +810,7 @@ do ($=jQuery) ->
         setEnabled : (enabled) ->
             @$el.toggleClass "disabled", not enabled
             idx = if enabled then 0 else -1
-            @$(".button").prop "tabindex", idx
+            @$el.prop "tabindex", idx
 
         activateIfAllowed: (event) ->
             unless @$el.is ".disabled"
@@ -832,159 +847,4 @@ do ($=jQuery) ->
 
         getListItem: ->
             @options.listItem
-
-    class Ribs.KeyboardManager
-    
-        # Internal char code tree for registered hot keys.
-        boundCharCodes: {}
-
-        # A registry for all views is required when showing hotkey help pane.
-        registeredViews:
-            global:
-                bindings: []
-                tree: {}
-                label: "Global"
-                context: window
-
-        options:
-
-            # Hotkey to preceed any jump keys.
-            jumpPrefixKey: "g"
-
-            # Time allowed between hotkeys
-            jumpTime: 1000
-
-            enableKeyboardShortcuts: true
-
-        constructor: (options) ->
-
-            @options = _.extend @options, options
-
-            @registerHotKey
-                hotkey: "?"
-                callback: @showKeyboardBindings
-                context: this
-                label: "Show hotkeys"
-
-            $(window).on "keypress", @handleKeypress
-
-        registerView: (view, label) ->
-            namespace = _.uniqueId "view"
-            @registeredViews[namespace] = 
-                label: label
-                context: view
-                tree: {}
-                bindings: []
-            namespace
-
-        unregisterView: (namespace) ->
-            delete @registeredViews[namespace]
-
-        # options:
-        #  hotkey: string (required)
-        #  label: string (required - displayed in help screen)
-        #  callback: function (required)
-        #  context: object (optional)
-        #  namespace: string (optional)
-        #  precondition: function (optional)
-        registerHotKey: (options) ->
-            options.charCodes ?= ( key.charCodeAt 0 for key in options.hotkey.split "" )
-            ns = options.namespace ?= "global"
-            root = @registeredViews[ns].tree
-            for code, i in options.charCodes
-                root[code] ?= { bindings: [], upcoming: 0 }
-                if i is options.charCodes.length - 1
-                    root[code].bindings.push options
-                else
-                    root[code].upcoming += 1
-                root = root[code]
-            @registeredViews[ns].bindings.push options
-            ns
-
-        registerJumpKey: (options) ->
-            options.label = "Go to #{options.label}"
-            options.hotkey = @options.jumpPrefixKey + options.jumpkey
-            @registerHotKey options
-
-
-        handleKeypress: (event, namespace="global") =>
-
-            return unless @options.enableKeyboardShortcuts
-
-            # don't do anything if user is typing text
-            return if $(document.activeElement).is(":input")
-
-            context = @currentContext ? @registeredViews[namespace].tree
-
-            @execute context, event.which if context?
-
-        execute: (context, charCode) ->
-
-            clearTimeout @timeout if @timeout
-            delete @currentContext
-            return unless charCode of context
-
-            context = context[charCode]
-
-            if context.upcoming is 0
-                for binding in context.bindings
-                    ctx = binding.context ? @registeredViews[binding.namespace].context
-                    unless binding.precondition and not binding.precondition.call ctx
-                        binding.callback.call ctx
-            else
-                @currentContext = context
-                @timeout = setTimeout =>
-                    @execute context
-                , @options.jumpTime
-
-            false
-
-
-        # Function which will construct/display applicable keyboard shortcuts 
-        # in an overlay.
-        showKeyboardBindings: ->
-            @constructor.view?.$el.remove()
-            view = @constructor.view = new Ribs.KeyboardHelpView
-                views: @registeredViews
-                hotkeys: @boundCharCodes
-
-            view.render()
-
-            $("body").append view.el
-            
-                
-
-    class Ribs.KeyboardHelpView extends Backbone.View
-
-        className: "ribs-keyboard-shortcuts-overlay"
-
-        events: 
-            'click' : "remove"
-
-        initialize:  ->
-            $(window).on "keyup", @handleKeyup
-
-        remove: ->
-            $(window).off "keyup", @handleKeyup
-            super
-
-        handleKeyup: (event) =>
-            # __<return>__ or __<esc>__ will remove overlay.
-            @remove() if event.which is 27
-            false
-
-        render: ->
-            @$el.empty()
-
-            for namespace, view of @options.views
-                unless $(view.context?.el).is ":hidden"
-                    h1 = $ "<h1/>", text: view.label
-                    ul = $ "<ul/>"
-                    for binding in view.bindings
-                        li = $ "<li/>", class: "hotkey"
-                        li.append $ "<span/>", class: "key", text: binding.hotkey
-                        li.append $ "<span/>", class: "action", text: binding.label
-                        ul.append li
-                    @$el.append h1, ul
-
 

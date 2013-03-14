@@ -1,16 +1,11 @@
 (function() {
   var __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   (function($) {
-    var root, _keyboardManager;
+    var Ribs, root, _ref;
     root = typeof window !== "undefined" && window !== null ? window : module.exports;
-    root.Ribs = {};
-    _keyboardManager = null;
-    Ribs.getKeyboardManager = function() {
-      return _keyboardManager != null ? _keyboardManager : _keyboardManager = new Ribs.KeyboardManager();
-    };
+    Ribs = (_ref = root.Ribs) != null ? _ref : root.Ribs = {};
     Ribs.List = (function(_super) {
 
       __extends(List, _super);
@@ -28,7 +23,7 @@
         'click [data-sort-by]': 'sortByField'
       };
 
-      List.prototype._ribsOptions = ["displayAttributes", "actions", "itemView", "jumpkey"];
+      List.prototype._ribsOptions = ["displayAttributes", "actions", "itemView", "itemName", "title", "jumpkey"];
 
       List.prototype.jumpSelector = ".list li:first";
 
@@ -36,35 +31,33 @@
 
       List.prototype.selectedByDefault = false;
 
-      List.prototype.stopPropogation = function(e) {
-        return e.preventDefault();
-      };
-
       List.prototype.renderOrder = ["Title", "Actions", "Header", "List", "Footer"];
 
       function List(options) {
-        var k, _i, _len, _ref, _ref1, _ref2;
+        var k, _i, _len, _ref1, _ref2, _ref3;
         this.sortArrows = {};
         this.sortArrows[-1] = "↓";
         this.sortArrows[1] = "↑";
-        if ((_ref = this.itemView) == null) {
+        if ((_ref1 = this.itemView) == null) {
           this.itemView = Ribs.ListItem;
         }
-        if ((_ref1 = this.actionView) == null) {
+        if ((_ref2 = this.actionView) == null) {
           this.actionView = Ribs.BatchAction;
         }
         this.events = _.extend({}, this.events, this._ribsEvents);
         this.sortingDirection = {};
         this.sortingBy = "id";
-        _ref2 = this._ribsOptions;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          k = _ref2[_i];
+        _ref3 = this._ribsOptions;
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          k = _ref3[_i];
           if (options[k] != null) {
             this[k] = options[k];
           }
         }
-        this.keyboardManager = Ribs.getKeyboardManager();
-        this.initializeHotKeys();
+        this.keyboardManager = typeof Ribs.getKeyboardManager === "function" ? Ribs.getKeyboardManager() : void 0;
+        if (this.keyboardManager != null) {
+          this.initializeHotKeys();
+        }
         List.__super__.constructor.apply(this, arguments);
         this.$el.addClass('ribs');
       }
@@ -75,7 +68,11 @@
       };
 
       List.prototype.remove = function() {
+        var _ref1;
         this.removeAllSubviews();
+        if ((_ref1 = this.keyboardManager) != null) {
+          _ref1.deregisterView(this.keyboardNamespace);
+        }
         return List.__super__.remove.apply(this, arguments);
       };
 
@@ -100,12 +97,12 @@
       };
 
       List.prototype.build = function() {
-        var l, t, _i, _len, _ref;
+        var l, t, _i, _len, _ref1;
         this.removeAllSubviews();
         this.$el.empty();
-        _ref = this.renderOrder;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          t = _ref[_i];
+        _ref1 = this.renderOrder;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          t = _ref1[_i];
           l = t.replace(/^./, "$" + (t[0].toLowerCase()));
           if (!(this["suppress" + t] || (this[l] != null))) {
             this[l] = this["initialize" + t]();
@@ -118,10 +115,10 @@
       };
 
       List.prototype.render = function() {
-        var t, _i, _len, _ref;
-        _ref = this.renderOrder;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          t = _ref[_i];
+        var t, _i, _len, _ref1;
+        _ref1 = this.renderOrder;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          t = _ref1[_i];
           if (!this["suppress" + t]) {
             this["render" + t]();
           }
@@ -130,14 +127,14 @@
       };
 
       List.prototype.setCollection = function(collection) {
-        var fn, t, _i, _len, _ref;
+        var fn, t, _i, _len, _ref1;
         this.collection = collection;
         this.stopListening(this.collection);
         this.listenTo(this.collection, "add", this.addItem);
         this.listenTo(this.collection, "sort reset", this.addAllItems);
-        _ref = ["Actions", "Footer", "Header"];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          t = _ref[_i];
+        _ref1 = ["Actions", "Footer", "Header"];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          t = _ref1[_i];
           fn = this["render" + t];
           if (!this["suppress" + t] && _.isFunction(fn)) {
             this.listenTo(this.collection, "selected deselected add remove", fn);
@@ -198,19 +195,19 @@
       };
 
       List.prototype.toggleSelected = function(e) {
-        var _ref, _ref1;
+        var _ref1, _ref2;
         if (this.selectedByDefault === true) {
           this.$list.find(".item.selected").trigger("deselectitem", {
             silent: true
           });
           this.selectedByDefault = false;
-          return (_ref = this.collection) != null ? _ref.trigger("deselected") : void 0;
+          return (_ref1 = this.collection) != null ? _ref1.trigger("deselected") : void 0;
         } else {
           this.$list.find(".item:not(.selected)").trigger("selectitem", {
             silent: true
           });
           this.selectedByDefault = true;
-          return (_ref1 = this.collection) != null ? _ref1.trigger("selected") : void 0;
+          return (_ref2 = this.collection) != null ? _ref2.trigger("selected") : void 0;
         }
       };
 
@@ -270,10 +267,10 @@
             if (a === b) {
               return 0;
             }
-            if (a > b || !(b != null)) {
+            if (a > b || (b == null)) {
               return +1 * dir;
             }
-            if (a < b || !(a != null)) {
+            if (a < b || (a == null)) {
               return -1 * dir;
             }
           };
@@ -282,9 +279,9 @@
       };
 
       List.prototype.updateHeaderArrows = function(field, old_field) {
-        var dir, el, re, _ref;
+        var dir, el, re, _ref1;
         re = new RegExp(" (" + (_.values(this.sortArrows).join("|")) + ")$|$");
-        dir = (_ref = this.sortingDirection[field]) != null ? _ref : 1;
+        dir = (_ref1 = this.sortingDirection[field]) != null ? _ref1 : 1;
         if (old_field != null) {
           this.$header.find("[data-sort-by='" + old_field + "'] .arrow").remove();
         }
@@ -385,43 +382,43 @@
           this.trigger('refresh');
           return this.collection.fetch({
             success: function() {
-              var _ref;
-              return (_ref = _this.$list.find(".item:first")) != null ? _ref.focus() : void 0;
+              var _ref1;
+              return (_ref1 = _this.$list.find(".item:first")) != null ? _ref1.focus() : void 0;
             }
           });
         }
       };
 
       List.prototype.focusin = function(event) {
-        var _ref;
+        var _ref1;
         if (!this.focussed) {
           this.focussed = true;
         }
         this.$el.addClass("focussed");
-        return (_ref = this.collection) != null ? _ref.trigger("focusin") : void 0;
+        return (_ref1 = this.collection) != null ? _ref1.trigger("focusin") : void 0;
       };
 
       List.prototype.focusout = function(event) {
         var _this = this;
         if (this.focussed) {
           return setTimeout(function() {
-            var _ref;
+            var _ref1;
             if (_this.$(document.activeElement).length === 0) {
               _this.$el.removeClass("focussed");
             }
             _this.focussed = false;
-            return (_ref = _this.collection) != null ? _ref.trigger("focusout") : void 0;
+            return (_ref1 = _this.collection) != null ? _ref1.trigger("focusout") : void 0;
           }, 10);
         }
       };
 
       List.prototype.plural = function() {
-        var _ref;
-        return (_ref = this.itemNamePlural) != null ? _ref : this.itemName + "s";
+        var _ref1;
+        return (_ref1 = this.itemNamePlural) != null ? _ref1 : this.itemName + "s";
       };
 
       List.prototype.addItem = function(model) {
-        var idx, itemView, view, _ref;
+        var idx, itemView, view, _ref1;
         if (Backbone.View.prototype.isPrototypeOf(this.itemView.prototype)) {
           itemView = this.itemView;
         } else {
@@ -432,7 +429,7 @@
           view: this
         });
         idx = this.collection.indexOf(model);
-        if ((_ref = this.$list.children().size()) === 0 || _ref === idx) {
+        if ((_ref1 = this.$list.children().size()) === 0 || _ref1 === idx) {
           this.$list.append(view.el);
         } else {
           this.$list.children(":nth-child(" + (idx + 1) + ")").before(view.el);
@@ -447,10 +444,10 @@
       };
 
       List.prototype.addAllItems = function() {
-        var _ref;
+        var _ref1;
         this.removeSubviews("list");
         this.$list.empty();
-        return (_ref = this.collection) != null ? _ref.each(this.addItem, this) : void 0;
+        return (_ref1 = this.collection) != null ? _ref1.each(this.addItem, this) : void 0;
       };
 
       List.prototype.get = function(id) {
@@ -466,8 +463,8 @@
       };
 
       List.prototype.initializeTitle = function() {
-        var $title, title, _ref;
-        title = (_ref = this.title) != null ? _ref : this.plural();
+        var $title, title, _ref1;
+        title = (_ref1 = this.title) != null ? _ref1 : this.plural();
         if (_.isFunction(title)) {
           title = title.call(this);
         }
@@ -481,43 +478,39 @@
       List.prototype.renderTitle = function() {};
 
       List.prototype.initializeActions = function() {
-        var $batchActions,
-          _this = this;
-        this.batchActions = [];
-        this.inlineActions = [];
-        this.allActions = [];
+        var $batchActions, action, view, _i, _len, _ref1;
         this.removeSubviews("action");
         $batchActions = $("<ul/>", {
           "class": "actions"
         });
-        _.each(this.actions, function(actionConfig) {
-          var action, view;
-          action = new Ribs.Action(actionConfig, {
-            view: _this
-          });
-          _this.allActions.push(action);
-          if (actionConfig.inline) {
-            _this.inlineActions.push(action);
-          }
-          if (actionConfig.batch !== false) {
-            _this.batchActions.push(action);
-            view = new _this.actionView({
-              model: action
-            });
-            _this.subviews("action").push(view);
-            $batchActions.append(view.el);
-            return view.render();
-          }
+        this.allActions = new Ribs.Actions(this.actions, {
+          ribs: this
         });
+        this.inlineActions = this.allActions.where({
+          inline: true
+        });
+        this.batchActions = this.allActions.where({
+          batch: true
+        });
+        _ref1 = this.batchActions;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          action = _ref1[_i];
+          view = new this.actionView({
+            model: action
+          });
+          this.subviews("action").push(view);
+          $batchActions.append(view.el);
+          view.render();
+        }
         return $batchActions;
       };
 
       List.prototype.renderActions = function() {
-        var view, _i, _len, _ref, _results;
-        _ref = this.subviews("action");
+        var view, _i, _len, _ref1, _results;
+        _ref1 = this.subviews("action");
         _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          view = _ref[_i];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          view = _ref1[_i];
           _results.push(view.render());
         }
         return _results;
@@ -532,11 +525,11 @@
       };
 
       List.prototype.renderList = function() {
-        var view, _i, _len, _ref, _results;
-        _ref = this.subviews("list");
+        var view, _i, _len, _ref1, _results;
+        _ref1 = this.subviews("list");
         _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          view = _ref[_i];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          view = _ref1[_i];
           view.render();
           _results.push(view.delegateEvents());
         }
@@ -568,10 +561,10 @@
         }
         this.displayAttributeMap = {};
         _.each(this.displayAttributes, function(attribute) {
-          var field, klass, label, _ref, _ref1;
+          var field, klass, label, _ref1, _ref2;
           _this.displayAttributeMap[attribute.field] = attribute;
-          label = (_ref = attribute.label) != null ? _ref : attribute.field;
-          klass = (_ref1 = attribute["class"]) != null ? _ref1 : attribute.field;
+          label = (_ref1 = attribute.label) != null ? _ref1 : attribute.field;
+          klass = (_ref2 = attribute["class"]) != null ? _ref2 : attribute.field;
           field = $("<div/>", {
             "class": klass,
             "data-sort-by": attribute.sortField || attribute.field
@@ -637,20 +630,20 @@
       };
 
       function ListItem(options) {
-        var action, attribute, inlineAction, key, listItemCell, _i, _len, _ref, _ref1, _ref2, _ref3;
+        var action, attribute, inlineAction, key, listItemCell, _i, _len, _ref1, _ref2, _ref3, _ref4;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
-        if ((_ref = this.itemCellView) == null) {
+        if ((_ref1 = this.itemCellView) == null) {
           this.itemCellView = Ribs.ListItemCell;
         }
-        if ((_ref1 = this.actionView) == null) {
+        if ((_ref2 = this.actionView) == null) {
           this.actionView = Ribs.InlineAction;
         }
         this.view = options != null ? options.view : void 0;
         this.listItemCells = [];
-        _ref2 = this.view.displayAttributes;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          attribute = _ref2[_i];
+        _ref3 = this.view.displayAttributes;
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          attribute = _ref3[_i];
           attribute = _.clone(attribute);
           attribute.view = this;
           attribute.model = options.model;
@@ -658,9 +651,9 @@
           this.listItemCells.push(listItemCell);
         }
         this.inlineActions = [];
-        _ref3 = this.view.inlineActions;
-        for (key in _ref3) {
-          action = _ref3[key];
+        _ref4 = this.view.inlineActions;
+        for (key in _ref4) {
+          action = _ref4[key];
           if (!((action.filter != null) && action.filter(this.model) === false)) {
             inlineAction = new this.actionView({
               model: action,
@@ -677,7 +670,7 @@
       }
 
       ListItem.prototype.render = function() {
-        var cell, div, inlineAction, toggle, ul, _i, _j, _len, _len1, _ref, _ref1;
+        var cell, div, inlineAction, toggle, ul, _i, _j, _len, _len1, _ref1, _ref2;
         this.$el.empty();
         if (!this.model) {
           return;
@@ -697,9 +690,9 @@
           div.append(toggle);
           this.$el.append(div);
         }
-        _ref = this.listItemCells;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          cell = _ref[_i];
+        _ref1 = this.listItemCells;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          cell = _ref1[_i];
           this.$el.append(cell.el);
           cell.render();
           cell.delegateEvents();
@@ -707,9 +700,9 @@
         ul = $("<ul/>", {
           "class": "actions"
         });
-        _ref1 = this.inlineActions;
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          inlineAction = _ref1[_j];
+        _ref2 = this.inlineActions;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          inlineAction = _ref2[_j];
           $(ul).append(inlineAction.el);
           inlineAction.render();
           inlineAction.delegateEvents();
@@ -775,16 +768,16 @@
       };
 
       ListItem.prototype.remove = function() {
-        var inlineAction, listItemCell, _i, _j, _len, _len1, _ref, _ref1;
+        var inlineAction, listItemCell, _i, _j, _len, _len1, _ref1, _ref2;
         this.deselect();
-        _ref = this.inlineActions;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          inlineAction = _ref[_i];
+        _ref1 = this.inlineActions;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          inlineAction = _ref1[_i];
           inlineAction.remove();
         }
-        _ref1 = this.listItemCells;
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          listItemCell = _ref1[_j];
+        _ref2 = this.listItemCells;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          listItemCell = _ref2[_j];
           listItemCell.remove();
         }
         return ListItem.__super__.remove.apply(this, arguments);
@@ -809,11 +802,11 @@
       };
 
       function ListItemCell(options) {
-        var _ref;
+        var _ref1;
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
         ListItemCell.__super__.constructor.apply(this, arguments);
-        this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
+        this.$el.addClass((_ref1 = this.options["class"]) != null ? _ref1 : this.options.field);
       }
 
       ListItemCell.prototype.renderableValue = function(nomap) {
@@ -826,7 +819,7 @@
       };
 
       ListItemCell.prototype.render = function() {
-        var editBtnEl, label, _ref, _ref1;
+        var editBtnEl, label, _ref1, _ref2;
         this.$el.empty();
         if (this.options.escape === false) {
           this.$el.html(this.renderableValue());
@@ -834,13 +827,13 @@
           this.$el.text(this.renderableValue());
         }
         if (this.options.editable === true) {
-          label = (_ref = this.options.label) != null ? _ref : this.options.field;
+          label = (_ref1 = this.options.label) != null ? _ref1 : this.options.field;
           editBtnEl = $("<span/>", {
             "class": 'edit button inline',
             title: "Edit " + label,
             text: '✎'
           });
-          if ((_ref1 = this.model.get(this.options.field)) === (void 0) || _ref1 === null || _ref1 === '') {
+          if ((_ref2 = this.model.get(this.options.field)) === (void 0) || _ref2 === null || _ref2 === '') {
             $(editBtnEl).addClass('show');
           } else {
             $(editBtnEl).removeClass('show');
@@ -851,16 +844,16 @@
       };
 
       ListItemCell.prototype.edit = function(event) {
-        var editField, key, option, optionEl, value, _i, _len, _ref, _ref1;
+        var editField, key, option, optionEl, value, _i, _len, _ref1, _ref2;
         if (this.options.editable === true) {
           value = this.model.get(this.options.field);
           if (_.isFunction(this.options.edit)) {
             editField = this.options.edit.call(this, value, this.model);
           } else if (_.isArray(this.options.edit)) {
             editField = $("<select/>");
-            _ref = this.options.edit;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              option = _ref[_i];
+            _ref1 = this.options.edit;
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              option = _ref1[_i];
               optionEl = $("<option/>", {
                 value: option,
                 text: option,
@@ -870,9 +863,9 @@
             }
           } else if (_.isObject(this.options.edit)) {
             editField = $("<select/>");
-            _ref1 = this.options.edit;
-            for (key in _ref1) {
-              option = _ref1[key];
+            _ref2 = this.options.edit;
+            for (key in _ref2) {
+              option = _ref2[key];
               optionEl = $("<option/>", {
                 value: key,
                 text: option,
@@ -907,8 +900,11 @@
           return this.options.save.call(this, editField, this.model);
         } else {
           value = editField.val();
-          changeSet = {};
+          changeSet = $.extend(true, {}, this.model.attributes);
           changeSet[this.options.field] = value;
+          if (!this.model._validate(changeSet, this.model)) {
+            return;
+          }
           try {
             return this.model.save(changeSet, {
               success: function() {
@@ -946,14 +942,23 @@
         min: 1,
         max: -1,
         arity: null,
-        check: null
+        check: null,
+        batch: true,
+        inline: false
       };
 
       Action.prototype.initialize = function(attributes, options) {
-        var _this = this;
-        this.ribs = options.view;
+        var _ref1, _ref2,
+          _this = this;
+        this.ribs = (_ref1 = options.ribs) != null ? _ref1 : this.collection.ribs;
+        if (this.has("actions")) {
+          this.actions = new Ribs.Actions(this.get("actions"), {
+            ribs: this.ribs
+          });
+          this.min = 0;
+        }
         if (this.has("hotkey") && !this.ribs.suppressHotKeys) {
-          return this.ribs.keyboardManager.registerHotKey({
+          return (_ref2 = this.ribs.keyboardManager) != null ? _ref2.registerHotKey({
             hotkey: this.get("hotkey"),
             label: this.get("label"),
             namespace: this.ribs.keyboardNamespace,
@@ -962,7 +967,7 @@
             callback: function() {
               return _this.activate();
             }
-          });
+          }) : void 0;
         }
       };
 
@@ -1003,6 +1008,19 @@
       return Action;
 
     })(Backbone.Model);
+    Ribs.Actions = (function(_super) {
+
+      __extends(Actions, _super);
+
+      function Actions() {
+        return Actions.__super__.constructor.apply(this, arguments);
+      }
+
+      Actions.prototype.model = Ribs.Action;
+
+      return Actions;
+
+    })(Backbone.Collection);
     Ribs.BatchAction = (function(_super) {
 
       __extends(BatchAction, _super);
@@ -1020,23 +1038,45 @@
         'keypress': 'keypressed'
       };
 
+      BatchAction.prototype.attributes = {
+        tabindex: 0
+      };
+
       BatchAction.prototype.render = function() {
-        var btn, label;
-        label = this.label();
+        var btn, cont;
         btn = $("<div/>", {
           "class": "button",
-          title: label,
-          html: label
+          title: this.label(false),
+          html: this.label()
         });
         this.$el.html(btn);
-        this.checkRequirements();
+        if (this.model.actions) {
+          cont = $("<ul/>", {
+            "class": "dropdown",
+            title: this.label(false)
+          });
+          this.model.actions.each(function(action) {
+            var view;
+            view = new Ribs.BatchAction({
+              model: action
+            });
+            $(cont).append(view.el);
+            return view.render();
+          });
+          $(btn).append(cont);
+        } else {
+          this.checkRequirements();
+        }
         return this;
       };
 
-      BatchAction.prototype.label = function() {
-        var label, _ref;
-        label = (_ref = this.model.get("batchLabel")) != null ? _ref : this.model.get("label");
-        if (this.model.has("hotkey")) {
+      BatchAction.prototype.label = function(highlight) {
+        var label, _ref1;
+        if (highlight == null) {
+          highlight = true;
+        }
+        label = (_ref1 = this.model.get("batchLabel")) != null ? _ref1 : this.model.get("label");
+        if (highlight && this.model.has("hotkey")) {
           label = this.constructor.highlightHotkey(label, this.model.get("hotkey"));
         }
         return label;
@@ -1056,7 +1096,7 @@
         var idx;
         this.$el.toggleClass("disabled", !enabled);
         idx = enabled ? 0 : -1;
-        return this.$(".button").prop("tabindex", idx);
+        return this.$el.prop("tabindex", idx);
       };
 
       BatchAction.prototype.activateIfAllowed = function(event) {
@@ -1095,7 +1135,7 @@
       return BatchAction;
 
     })(Backbone.View);
-    Ribs.InlineAction = (function(_super) {
+    return Ribs.InlineAction = (function(_super) {
 
       __extends(InlineAction, _super);
 
@@ -1104,8 +1144,8 @@
       }
 
       InlineAction.prototype.label = function() {
-        var label, _ref;
-        label = (_ref = this.model.get("inlineLabel")) != null ? _ref : this.model.get("label");
+        var label, _ref1;
+        label = (_ref1 = this.model.get("inlineLabel")) != null ? _ref1 : this.model.get("label");
         if (_.isFunction(label)) {
           label = label.call(this.model, this.options.listItem.model);
         }
@@ -1123,6 +1163,17 @@
       return InlineAction;
 
     })(Ribs.BatchAction);
+  })(jQuery);
+
+  (function($) {
+    var Ribs, root, _keyboardManager, _ref,
+      _this = this;
+    root = typeof window !== "undefined" && window !== null ? window : module.exports;
+    Ribs = (_ref = root.Ribs) != null ? _ref : root.Ribs = {};
+    _keyboardManager = null;
+    Ribs.getKeyboardManager = function() {
+      return _keyboardManager != null ? _keyboardManager : _keyboardManager = new Ribs.KeyboardManager();
+    };
     Ribs.KeyboardManager = (function() {
 
       KeyboardManager.prototype.boundCharCodes = {};
@@ -1143,7 +1194,13 @@
       };
 
       function KeyboardManager(options) {
-        this.handleKeypress = __bind(this.handleKeypress, this);
+        var _this = this;
+        this.handleKeypress = function(event, namespace) {
+          if (namespace == null) {
+            namespace = "global";
+          }
+          return KeyboardManager.prototype.handleKeypress.apply(_this, arguments);
+        };
         this.options = _.extend(this.options, options);
         this.registerHotKey({
           hotkey: "?",
@@ -1166,30 +1223,30 @@
         return namespace;
       };
 
-      KeyboardManager.prototype.unregisterView = function(namespace) {
+      KeyboardManager.prototype.deregisterView = function(namespace) {
         return delete this.registeredViews[namespace];
       };
 
       KeyboardManager.prototype.registerHotKey = function(options) {
-        var code, i, key, ns, _i, _len, _ref, _ref1, _ref2, _ref3;
-        if ((_ref = options.charCodes) == null) {
+        var code, i, key, ns, _i, _len, _ref1, _ref2, _ref3, _ref4;
+        if ((_ref1 = options.charCodes) == null) {
           options.charCodes = (function() {
-            var _i, _len, _ref1, _results;
-            _ref1 = options.hotkey.split("");
+            var _i, _len, _ref2, _results;
+            _ref2 = options.hotkey.split("");
             _results = [];
-            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-              key = _ref1[_i];
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              key = _ref2[_i];
               _results.push(key.charCodeAt(0));
             }
             return _results;
           })();
         }
-        ns = (_ref1 = options.namespace) != null ? _ref1 : options.namespace = "global";
+        ns = (_ref2 = options.namespace) != null ? _ref2 : options.namespace = "global";
         root = this.registeredViews[ns].tree;
-        _ref2 = options.charCodes;
-        for (i = _i = 0, _len = _ref2.length; _i < _len; i = ++_i) {
-          code = _ref2[i];
-          if ((_ref3 = root[code]) == null) {
+        _ref3 = options.charCodes;
+        for (i = _i = 0, _len = _ref3.length; _i < _len; i = ++_i) {
+          code = _ref3[i];
+          if ((_ref4 = root[code]) == null) {
             root[code] = {
               bindings: [],
               upcoming: 0
@@ -1206,14 +1263,51 @@
         return ns;
       };
 
+      KeyboardManager.prototype.deregisterHotKey = function(options) {
+        var code, current, i, key, ns, _i, _len, _ref1, _ref2, _ref3, _results;
+        if ((_ref1 = options.charCodes) == null) {
+          options.charCodes = (function() {
+            var _i, _len, _ref2, _results;
+            _ref2 = options.hotkey.split("");
+            _results = [];
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              key = _ref2[_i];
+              _results.push(key.charCodeAt(0));
+            }
+            return _results;
+          })();
+        }
+        ns = (_ref2 = options.namespace) != null ? _ref2 : options.namespace = "global";
+        root = current = this.registeredViews[ns].tree;
+        _ref3 = options.charCodes;
+        _results = [];
+        for (i = _i = 0, _len = _ref3.length; _i < _len; i = ++_i) {
+          code = _ref3[i];
+          current = current[code];
+          if (i === options.charCodes.length - 1) {
+            _results.push(current.bindings = _.reject(current.bindings, function(binding) {
+              return (!options.context || options.context === binding.context) && (!options.callback || options.callback === binding.callback);
+            }));
+          } else {
+            _results.push(current.upcoming -= 1);
+          }
+        }
+        return _results;
+      };
+
       KeyboardManager.prototype.registerJumpKey = function(options) {
         options.label = "Go to " + options.label;
         options.hotkey = this.options.jumpPrefixKey + options.jumpkey;
         return this.registerHotKey(options);
       };
 
+      KeyboardManager.prototype.deregisterJumpKey = function(options) {
+        options.hotkey = this.options.jumpPrefixKey + options.jumpkey;
+        return this.deregisterHotKey(options);
+      };
+
       KeyboardManager.prototype.handleKeypress = function(event, namespace) {
-        var context, _ref;
+        var context, _ref1;
         if (namespace == null) {
           namespace = "global";
         }
@@ -1223,17 +1317,16 @@
         if ($(document.activeElement).is(":input")) {
           return;
         }
-        context = (_ref = this.currentContext) != null ? _ref : this.registeredViews[namespace].tree;
+        context = (_ref1 = this.currentContext) != null ? _ref1 : this.registeredViews[namespace].tree;
         if (context != null) {
-          return this.execute(context, event.which);
+          return this.walkContext(context, event.which);
         }
       };
 
-      KeyboardManager.prototype.execute = function(context, charCode) {
-        var binding, ctx, _i, _len, _ref, _ref1,
-          _this = this;
-        if (this.timeout) {
-          clearTimeout(this.timeout);
+      KeyboardManager.prototype.walkContext = function(context, charCode) {
+        var _this = this;
+        if (this.jumpTimeout) {
+          clearTimeout(this.jumpTimeout);
         }
         delete this.currentContext;
         if (!(charCode in context)) {
@@ -1241,27 +1334,39 @@
         }
         context = context[charCode];
         if (context.upcoming === 0) {
-          _ref = context.bindings;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            binding = _ref[_i];
-            ctx = (_ref1 = binding.context) != null ? _ref1 : this.registeredViews[binding.namespace].context;
-            if (!(binding.precondition && !binding.precondition.call(ctx))) {
-              binding.callback.call(ctx);
-            }
-          }
+          this.execute(context);
         } else {
           this.currentContext = context;
-          this.timeout = setTimeout(function() {
+          this.jumpTimeout = setTimeout(function() {
+            delete _this.currentContext;
             return _this.execute(context);
           }, this.options.jumpTime);
         }
         return false;
       };
 
+      KeyboardManager.prototype.execute = function(context) {
+        var binding, ctx, _i, _len, _ref1, _ref2, _results;
+        if (context.bindings.length) {
+          _ref1 = context.bindings;
+          _results = [];
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            binding = _ref1[_i];
+            ctx = (_ref2 = binding.context) != null ? _ref2 : this.registeredViews[binding.namespace].context;
+            if (!(binding.precondition && !binding.precondition.call(ctx))) {
+              _results.push(binding.callback.call(ctx));
+            } else {
+              _results.push(void 0);
+            }
+          }
+          return _results;
+        }
+      };
+
       KeyboardManager.prototype.showKeyboardBindings = function() {
-        var view, _ref;
-        if ((_ref = this.constructor.view) != null) {
-          _ref.$el.remove();
+        var view, _ref1;
+        if ((_ref1 = this.constructor.view) != null) {
+          _ref1.$el.remove();
         }
         view = this.constructor.view = new Ribs.KeyboardHelpView({
           views: this.registeredViews,
@@ -1279,7 +1384,10 @@
       __extends(KeyboardHelpView, _super);
 
       function KeyboardHelpView() {
-        this.handleKeyup = __bind(this.handleKeyup, this);
+        var _this = this;
+        this.handleKeyup = function(event) {
+          return KeyboardHelpView.prototype.handleKeyup.apply(_this, arguments);
+        };
         return KeyboardHelpView.__super__.constructor.apply(this, arguments);
       }
 
@@ -1306,20 +1414,20 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _ref2, _results;
+        var binding, h1, li, namespace, ul, view, _i, _len, _ref1, _ref2, _ref3, _results;
         this.$el.empty();
-        _ref = this.options.views;
+        _ref1 = this.options.views;
         _results = [];
-        for (namespace in _ref) {
-          view = _ref[namespace];
-          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden")) {
+        for (namespace in _ref1) {
+          view = _ref1[namespace];
+          if (!$((_ref2 = view.context) != null ? _ref2.el : void 0).is(":hidden")) {
             h1 = $("<h1/>", {
               text: view.label
             });
             ul = $("<ul/>");
-            _ref2 = view.bindings;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              binding = _ref2[_i];
+            _ref3 = view.bindings;
+            for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+              binding = _ref3[_i];
               li = $("<li/>", {
                 "class": "hotkey"
               });
