@@ -118,6 +118,9 @@
 .ribs .list:hover .edit.button.inline {
   display: inline;
 }
+.ribs .list .actions {
+  margin-bottom: 0;
+}
 .ribs .list .item {
   overflow: hidden;
   white-space: nowrap;

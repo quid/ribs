@@ -98,6 +98,10 @@
         .edit.button.inline.show, &:hover .edit.button.inline
             display inline
 
+        .actions
+            margin-bottom: 0
+
+
         .item
             overflow hidden
             white-space nowrap
