@@ -12,15 +12,16 @@ actions to run against selected models.
 Annotated Source
 ----------------
 
-You can feel free to look at the [annotated source](http://quid.github.com/ribs/src/ribs.coffee.html).
+- [ribs.coffee](http://quid.github.com/ribs/docs/ribs.html).
+- [hotkeys.coffee](http://quid.github.com/ribs/docs/hotkeys.html).
 
 Example application
 -------------------
 
 A good way to learn how to use Ribs is to look at the 
-[annotated source of our demo application](http://quid.github.com/ribs/demo/todos.js.html).
+[annotated source of our demo application](http://quid.github.com/ribs/docs/demo/todos.html).
 
-You can see the [application in action here](http://quid.github.com/ribs/demo).
+You can see the application in action [here](http://quid.github.com/ribs/demo).
 
 Dependencies
 ------------
