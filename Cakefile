@@ -19,11 +19,11 @@ task 'build', 'compile rib.js from ribs.coffee', (options) ->
     jsCode = coffee.compile jsCode
     fs.writeFileSync "ribs.js", jsCode
 
-    # minify / uglify
+    # minify / uglify javascript
     minified = UglifyJS.minify(jsCode, fromString: true).code
     fs.writeFileSync "ribs.min.js", minified
-
-
+    
+    # compile stylus to css
     styleCode = joinFiles 'ribs.stylus'
     stylus.render styleCode, filename: 'ribs.css', (err, css) ->
         fs.writeFileSync "ribs.css", css

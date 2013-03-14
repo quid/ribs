@@ -1,3 +1,9 @@
+0.1.2 - Mar, 14, 2013
+
+- Batch actions can now be collapsed into dropdown
+- Styles now provided as Stylus code instead of pure CSS
+- Keyboard manager is separated at a source code level (hotkeys.coffee).
+
 0.1.1 - Jan, 30, 2013
 
 - A `displayAttributes` property `editable` now must be boolean.
