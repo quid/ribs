@@ -1,5 +1,6 @@
 .ribs {
   font-family: verdana, arial, sans-serif;
+  font-size: 12pt;
   text-align: left;
 }
 .ribs strong {
@@ -102,32 +103,13 @@
   overflow-y: scroll;
   overflow-x: auto;
 }
-.ribs .list .button {
-  font-size: 80%;
-  margin: 0 0 0 4px;
-  padding: 1px 3px;
-}
-.ribs .list .button .button {
-  font-size: 80%;
-  padding: 0;
-}
-.ribs .list .edit.button.inline {
-  display: none;
-}
-.ribs .list .edit.button.inline.show,
-.ribs .list:hover .edit.button.inline {
-  display: inline;
-}
-.ribs .list .actions {
-  margin-bottom: 0;
-}
 .ribs .list .item {
   overflow: hidden;
   white-space: nowrap;
   border-top: 1px solid #fff;
   border-bottom: 1px solid #aaa;
 }
-.ribs .list .item > div:hover {
+.ribs .list .item > .cell:hover {
   white-space: normal;
   text-overflow: none;
 }
@@ -145,6 +127,25 @@
 }
 .ribs .list .item:focus > :first-child {
   padding-left: 6px;
+}
+.ribs .list .item .button {
+  font-size: 80%;
+  margin: 0 0 0 4px;
+  padding: 1px 3px;
+}
+.ribs .list .item .button .button {
+  font-size: 80%;
+  padding: 0;
+}
+.ribs .list .item .edit.button.inline {
+  display: none;
+}
+.ribs .list .item .edit.button.inline.show,
+.ribs .list .item:hover .edit.button.inline {
+  display: inline;
+}
+.ribs .list .item .actions {
+  margin-bottom: 0;
 }
 .ribs .header {
   border: 1px solid #aaa;
