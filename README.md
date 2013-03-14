@@ -19,7 +19,7 @@ Example application
 -------------------
 
 A good way to learn how to use Ribs is to look at the 
-[annotated source of our demo application](http://quid.github.com/ribs/docs/demo/todos.html).
+[annotated source of our demo application](http://quid.github.com/ribs/docs/todos.html).
 
 You can see the application in action [here](http://quid.github.com/ribs/demo).
 
