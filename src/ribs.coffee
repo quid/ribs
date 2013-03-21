@@ -742,7 +742,9 @@ do ($=jQuery) ->
 
         activate: (selected, listItem)->
             selected = @getSelected() unless selected?
-            @get("activate").call @ribs, selected, listItem
+            activate = @get "activate"
+            if _.isFunction activate
+                activate.call @ribs, selected, listItem
 
         getSelected: ->
             @ribs.getSelected()
@@ -816,7 +818,7 @@ do ($=jQuery) ->
             @$el.prop "tabindex", idx
 
         activate: () ->
-            @model.activate @getSelected(), @getListItem() if @model.activate?
+            @model.activate @getSelected(), @getListItem()
             false
 
         activateIfAllowed: (event) ->

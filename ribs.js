@@ -1040,10 +1040,15 @@
       };
 
       Action.prototype.activate = function(selected, listItem) {
+        var activate;
+
         if (selected == null) {
           selected = this.getSelected();
         }
-        return this.get("activate").call(this.ribs, selected, listItem);
+        activate = this.get("activate");
+        if (_.isFunction(activate)) {
+          return activate.call(this.ribs, selected, listItem);
+        }
       };
 
       Action.prototype.getSelected = function() {
@@ -1155,9 +1160,7 @@
       };
 
       BatchAction.prototype.activate = function() {
-        if (this.model.activate != null) {
-          this.model.activate(this.getSelected(), this.getListItem());
-        }
+        this.model.activate(this.getSelected(), this.getListItem());
         return false;
       };
 
