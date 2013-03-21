@@ -24,6 +24,6 @@ task 'build', 'compile rib.js from ribs.coffee', (options) ->
     fs.writeFileSync "ribs.min.js", minified
     
     # compile stylus to css
-    styleCode = joinFiles 'ribs.stylus'
+    styleCode = joinFiles 'ribs.styl'
     stylus.render styleCode, filename: 'ribs.css', (err, css) ->
         fs.writeFileSync "ribs.css", css
