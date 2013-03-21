@@ -388,8 +388,10 @@
       };
 
       List.prototype.keypressed = function(event) {
+        var _ref1;
+
         this.trigger("keypressed", event);
-        return this.keyboardManager.handleKeypress(event, this.keyboardNamespace);
+        return (_ref1 = this.keyboardManager) != null ? _ref1.handleKeypress(event, this.keyboardNamespace) : void 0;
       };
 
       List.prototype.refresh = function() {
@@ -1090,7 +1092,7 @@
 
         btn = $("<div/>", {
           "class": "button",
-          title: this.label(false),
+          title: this.tooltip(),
           html: this.label()
         });
         this.$el.html(btn);
@@ -1113,6 +1115,12 @@
           this.checkRequirements();
         }
         return this;
+      };
+
+      BatchAction.prototype.tooltip = function() {
+        var _ref4;
+
+        return (_ref4 = this.model.get("tooltip")) != null ? _ref4 : this.label(false);
       };
 
       BatchAction.prototype.label = function(highlight) {
@@ -1146,15 +1154,17 @@
         return this.$el.prop("tabindex", idx);
       };
 
-      BatchAction.prototype.activateIfAllowed = function(event) {
-        if (!this.$el.is(".disabled")) {
+      BatchAction.prototype.activate = function() {
+        if (this.model.activate != null) {
           this.model.activate(this.getSelected(), this.getListItem());
         }
         return false;
       };
 
-      BatchAction.prototype.activate = function(event) {
-        this.model.activate(this.getSelected(), this.getListItem());
+      BatchAction.prototype.activateIfAllowed = function(event) {
+        if (!this.$el.is(".disabled")) {
+          this.activate();
+        }
         return false;
       };
 

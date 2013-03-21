@@ -95,6 +95,7 @@
                 
                 {
                     label: "More ▾",
+                    tooltip: "Advanced actions",
                     actions: [
                         {
                             label: "Clear selected",

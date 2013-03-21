@@ -294,7 +294,7 @@ do ($=jQuery) ->
 
         keypressed : (event) ->
             @trigger "keypressed", event
-            @keyboardManager.handleKeypress event, @keyboardNamespace
+            @keyboardManager?.handleKeypress event, @keyboardNamespace
     
         refresh: ->
             if @collection.url?
@@ -768,7 +768,7 @@ do ($=jQuery) ->
 
             btn = $ "<div/>", 
                 class: "button"
-                title: @label(false)
+                title: @tooltip()
                 html: @label()
 
             @$el.html btn
@@ -792,6 +792,9 @@ do ($=jQuery) ->
 
             this
 
+        tooltip: ->
+            @model.get("tooltip") ? @label(false)
+
         label: (highlight=true)->
             label = @model.get("batchLabel") ? @model.get("label")
             if highlight and @model.has "hotkey"
@@ -812,18 +815,17 @@ do ($=jQuery) ->
             idx = if enabled then 0 else -1
             @$el.prop "tabindex", idx
 
-        activateIfAllowed: (event) ->
-            unless @$el.is ".disabled"
-                @model.activate @getSelected(), @getListItem()
+        activate: () ->
+            @model.activate @getSelected(), @getListItem() if @model.activate?
             false
 
-        activate: (event) ->
-            @model.activate @getSelected(), @getListItem()
+        activateIfAllowed: (event) ->
+            unless @$el.is ".disabled"
+                @activate()
             false
 
         keypressed : (event) ->
-            # activate on <return>
-            if event.which is 13
+            if event.which is 13 # <return>
                 @activate()
                 false
 
