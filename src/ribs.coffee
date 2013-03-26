@@ -373,7 +373,10 @@ do ($=jQuery) ->
 
             $batchActions = $ "<ul/>", class: "actions"
 
-            @allActions = new Ribs.Actions @actions, ribs: this
+            _availableActions = _.reject @actions, (action) =>
+                action.available? and !action.available.call this
+
+            @allActions = new Ribs.Actions _availableActions, ribs: this
             
             @inlineActions = @allActions.where inline: true
 
@@ -704,7 +707,9 @@ do ($=jQuery) ->
             @ribs = options.ribs ? @collection.ribs
 
             if @has "actions"
-                @actions = new Ribs.Actions @get("actions"), ribs: @ribs
+                availableActions = _.reject @get("actions"), (action) =>
+                    action.available? and not action.available.call @ribs
+                @actions = new Ribs.Actions availableActions, ribs: @ribs
                 @min = 0
 
             if @has("hotkey") and not @ribs.suppressHotKeys
