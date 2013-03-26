@@ -11,7 +11,11 @@
         "coffee-script": "*",
         "stylus": "*",
         "uglify-js": "*",
-        "docco": "*"
+        "docco": "*",
+        "jsdom": "*",
+        "requirejs": "*",
+        "mocha": "*",
+        "should": "*"
     },
     "repository" : {
         "type" : "git",
@@ -22,6 +26,7 @@
         "url": "http://opensource.org/licenses/mit-license.php"
     }, 
     "scripts" : {
+        "test": "mocha",
         "docs": "cake build && docco *.md src/*.coffee demo/todos.js"
     }
 }

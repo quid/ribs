@@ -1,6 +1,6 @@
+requirejs = require "requirejs"
+
 rootDir = "#{__dirname}/../"
-libDir = rootDir + "test/lib/"
-requirejs = require(libDir + "r")
 
 describe 'Ribs Tests', ->
     before (done) ->

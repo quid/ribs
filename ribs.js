@@ -505,13 +505,17 @@
       List.prototype.renderTitle = function() {};
 
       List.prototype.initializeActions = function() {
-        var $batchActions, action, view, _i, _len, _ref1;
+        var $batchActions, action, view, _availableActions, _i, _len, _ref1,
+          _this = this;
 
         this.removeSubviews("action");
         $batchActions = $("<ul/>", {
           "class": "actions"
         });
-        this.allActions = new Ribs.Actions(this.actions, {
+        _availableActions = _.reject(this.actions, function(action) {
+          return (action.available != null) && !action.available.call(_this);
+        });
+        this.allActions = new Ribs.Actions(_availableActions, {
           ribs: this
         });
         this.inlineActions = this.allActions.where({
@@ -991,12 +995,15 @@
       };
 
       Action.prototype.initialize = function(attributes, options) {
-        var _ref2, _ref3,
+        var availableActions, _ref2, _ref3,
           _this = this;
 
         this.ribs = (_ref2 = options.ribs) != null ? _ref2 : this.collection.ribs;
         if (this.has("actions")) {
-          this.actions = new Ribs.Actions(this.get("actions"), {
+          availableActions = _.reject(this.get("actions"), function(action) {
+            return (action.available != null) && !action.available.call(_this.ribs);
+          });
+          this.actions = new Ribs.Actions(availableActions, {
             ribs: this.ribs
           });
           this.min = 0;
