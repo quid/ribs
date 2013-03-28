@@ -109,10 +109,7 @@ do ($=jQuery) ->
             for t in ["Actions", "Footer", "Header"]
                 fn = @["render#{t}"]
                 if not @["suppress#{t}"] and _.isFunction fn
-                    @listenTo @collection, "selected deselected add remove", fn
-
-            # render everything on reset
-            @listenTo @collection, "reset", @render
+                    @listenTo @collection, "selected deselected add remove reset", fn
 
             @addAllItems()
 
@@ -337,7 +334,7 @@ do ($=jQuery) ->
             else
                 @$list.children(":nth-child(#{ idx + 1 })").before view.el
 
-            view.render() if @$el.is ":visible"
+            view.render()
             @subviews("list").push view
             view.select() if @selectedByDefault
 
@@ -351,11 +348,6 @@ do ($=jQuery) ->
             _.find @subviews("list"), (view) ->
                 view.model.id == id
 
-        # Gets list item view by CID
-        getByCid: (cid) ->
-            _.find @subviews("list"), (view) ->
-                view.model.cid == cid
-        
         # initializing
         
         initializeTitle: -> 

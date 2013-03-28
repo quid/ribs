@@ -144,10 +144,9 @@
           t = _ref1[_i];
           fn = this["render" + t];
           if (!this["suppress" + t] && _.isFunction(fn)) {
-            this.listenTo(this.collection, "selected deselected add remove", fn);
+            this.listenTo(this.collection, "selected deselected add remove reset", fn);
           }
         }
-        this.listenTo(this.collection, "reset", this.render);
         this.addAllItems();
         if (!this.suppressHeader) {
           return this.updateHeaderArrows(this.sortingBy);
@@ -459,9 +458,7 @@
         } else {
           this.$list.children(":nth-child(" + (idx + 1) + ")").before(view.el);
         }
-        if (this.$el.is(":visible")) {
-          view.render();
-        }
+        view.render();
         this.subviews("list").push(view);
         if (this.selectedByDefault) {
           return view.select();
@@ -479,12 +476,6 @@
       List.prototype.get = function(id) {
         return _.find(this.subviews("list"), function(view) {
           return view.model.id === id;
-        });
-      };
-
-      List.prototype.getByCid = function(cid) {
-        return _.find(this.subviews("list"), function(view) {
-          return view.model.cid === cid;
         });
       };
 
