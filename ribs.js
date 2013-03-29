@@ -8,6 +8,7 @@
 
     root = typeof window !== "undefined" && window !== null ? window : module.exports;
     Ribs = (_ref = root.Ribs) != null ? _ref : root.Ribs = {};
+    Ribs.VERSION = "0.1.2";
     Ribs.List = (function(_super) {
       __extends(List, _super);
 

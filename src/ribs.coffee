@@ -4,6 +4,8 @@ do ($=jQuery) ->
     root = window ? module.exports
     Ribs = root.Ribs ?= {}
 
+    Ribs.VERSION = "0.1.2"
+
     # `Ribs.List` is the primary Ribs component.
     class Ribs.List extends Backbone.View
   
