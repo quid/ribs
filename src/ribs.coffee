@@ -93,9 +93,12 @@ do ($=jQuery) ->
             @setCollection @collection if @collection?
 
         render: ->
-            for t in @renderOrder
-                @["render#{t}"]() unless @["suppress#{t}"]
+            @_render @renderOrder
             this
+
+        _render: (order) ->
+            for t in order
+                @["render#{t}"]() unless @["suppress#{t}"]
         
         setCollection: (collection)->
             @collection = collection
@@ -159,6 +162,12 @@ do ($=jQuery) ->
             toDeselect = @$list.find(".item.selected")
             toSelect.trigger "select"
             toDeselect.trigger "deselectitem"
+
+        select: (ids) ->
+            ids = [ids] unless _.isArray ids
+            for id in ids
+                @get(id)?.$el.trigger "selectitem", silent: true
+            @_render ["Header", "Footer", "Actions"]
     
         toggleVisibility : ->
             @$header.find(".maximize, .minimize").toggle()

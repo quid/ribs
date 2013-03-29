@@ -121,16 +121,23 @@
       };
 
       List.prototype.render = function() {
-        var t, _i, _len, _ref1;
+        this._render(this.renderOrder);
+        return this;
+      };
 
-        _ref1 = this.renderOrder;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          t = _ref1[_i];
+      List.prototype._render = function(order) {
+        var t, _i, _len, _results;
+
+        _results = [];
+        for (_i = 0, _len = order.length; _i < _len; _i++) {
+          t = order[_i];
           if (!this["suppress" + t]) {
-            this["render" + t]();
+            _results.push(this["render" + t]());
+          } else {
+            _results.push(void 0);
           }
         }
-        return this;
+        return _results;
       };
 
       List.prototype.setCollection = function(collection) {
@@ -228,6 +235,23 @@
         toDeselect = this.$list.find(".item.selected");
         toSelect.trigger("select");
         return toDeselect.trigger("deselectitem");
+      };
+
+      List.prototype.select = function(ids) {
+        var id, _i, _len, _ref1;
+
+        if (!_.isArray(ids)) {
+          ids = [ids];
+        }
+        for (_i = 0, _len = ids.length; _i < _len; _i++) {
+          id = ids[_i];
+          if ((_ref1 = this.get(id)) != null) {
+            _ref1.$el.trigger("selectitem", {
+              silent: true
+            });
+          }
+        }
+        return this._render(["Header", "Footer", "Actions"]);
       };
 
       List.prototype.toggleVisibility = function() {
