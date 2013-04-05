@@ -507,6 +507,16 @@ do ($=jQuery) ->
             return unless @model
             @$el.data("cid", @model.cid)
 
+
+            # Add inline actions.
+            ul = $ "<ul/>", class: "actions"
+            for inlineAction in @inlineActions
+                $(ul).append inlineAction.el
+                inlineAction.render()
+                inlineAction.delegateEvents()
+            @$el.append ul
+
+            # Add selection toggle
             unless @view.suppressToggle
                 toggle = $ "<input/>",
                     type: "checkbox"
@@ -517,19 +527,11 @@ do ($=jQuery) ->
                 div.append toggle
                 @$el.append div
 
-            # Render our individual cells
+            # Add individual cells
             for cell in @listItemCells
                 @$el.append cell.el
                 cell.render()
                 cell.delegateEvents()
-
-            # Add inline actions.
-            ul = $ "<ul/>", class: "actions"
-            for inlineAction in @inlineActions
-                $(ul).append inlineAction.el
-                inlineAction.render()
-                inlineAction.delegateEvents()
-            @$el.append ul
             
             this
 
@@ -643,8 +645,8 @@ do ($=jQuery) ->
                         optionEl = $ "<option/>", 
                             value: option
                             text: option
-                            selected: option is value
                         editField.append optionEl
+                        $(optionEl).prop "selected", option is value
                 else if _.isObject @options.edit  
                     # edit = object will give a select box
                     editField = $ "<select/>"
@@ -652,7 +654,7 @@ do ($=jQuery) ->
                         optionEl = $ "<option/>", 
                             value: key
                             text: option
-                            selected: key is value
+                        $(optionEl).prop "selected", key is value
                         editField.append optionEl
                 else 
                     # no edit property will default to a text box

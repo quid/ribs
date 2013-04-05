@@ -145,7 +145,8 @@
   display: inline;
 }
 .ribs .list .item .actions {
-  margin-bottom: 0;
+  float: right;
+  margin: 5px 0 0;
 }
 .ribs .header {
   border: 1px solid #aaa;

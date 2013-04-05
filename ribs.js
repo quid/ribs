@@ -733,6 +733,17 @@
           return;
         }
         this.$el.data("cid", this.model.cid);
+        ul = $("<ul/>", {
+          "class": "actions"
+        });
+        _ref1 = this.inlineActions;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          inlineAction = _ref1[_i];
+          $(ul).append(inlineAction.el);
+          inlineAction.render();
+          inlineAction.delegateEvents();
+        }
+        this.$el.append(ul);
         if (!this.view.suppressToggle) {
           toggle = $("<input/>", {
             type: "checkbox",
@@ -747,24 +758,13 @@
           div.append(toggle);
           this.$el.append(div);
         }
-        _ref1 = this.listItemCells;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          cell = _ref1[_i];
+        _ref2 = this.listItemCells;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          cell = _ref2[_j];
           this.$el.append(cell.el);
           cell.render();
           cell.delegateEvents();
         }
-        ul = $("<ul/>", {
-          "class": "actions"
-        });
-        _ref2 = this.inlineActions;
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          inlineAction = _ref2[_j];
-          $(ul).append(inlineAction.el);
-          inlineAction.render();
-          inlineAction.delegateEvents();
-        }
-        this.$el.append(ul);
         return this;
       };
 
@@ -917,10 +917,10 @@
               option = _ref1[_i];
               optionEl = $("<option/>", {
                 value: option,
-                text: option,
-                selected: option === value
+                text: option
               });
               editField.append(optionEl);
+              $(optionEl).prop("selected", option === value);
             }
           } else if (_.isObject(this.options.edit)) {
             editField = $("<select/>");
@@ -929,9 +929,9 @@
               option = _ref2[key];
               optionEl = $("<option/>", {
                 value: key,
-                text: option,
-                selected: key === value
+                text: option
               });
+              $(optionEl).prop("selected", key === value);
               editField.append(optionEl);
             }
           } else {
