@@ -396,6 +396,7 @@ do ($=jQuery) ->
         renderActions: ->
             for view in @subviews("action")
                 view.render() 
+                view.delegateEvents()
         
         initializeList: ->
             $list = $ "<ul/>", class: "list"
