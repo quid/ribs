@@ -115,6 +115,29 @@
         }
       };
 
+      List.prototype.delegateEvents = function() {
+        var sv, view, _i, _len, _ref, _results;
+        List.__super__.delegateEvents.apply(this, arguments);
+        _ref = ["list", "actions"];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          sv = _ref[_i];
+          if (this.subviews(sv) != null) {
+            _results.push((function() {
+              var _j, _len1, _ref1, _results1;
+              _ref1 = this.subviews(sv);
+              _results1 = [];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                view = _ref1[_j];
+                _results1.push(view.delegateEvents());
+              }
+              return _results1;
+            }).call(this));
+          }
+        }
+        return _results;
+      };
+
       List.prototype.render = function() {
         this._render(this.renderOrder);
         return this;
@@ -840,7 +863,7 @@
       ListItemCell.prototype.className = "cell";
 
       ListItemCell.prototype._ribsEvents = {
-        'click .edit': 'edit',
+        'click .edit': 'handleEdit',
         'click .editableField': 'stopPropagation',
         'keypress .editableField': 'handleKeypress',
         'blur .editableField': 'saveEditedField'
@@ -851,14 +874,22 @@
         this.events || (this.events = {});
         _.extend(this.events, this._ribsEvents);
         ListItemCell.__super__.constructor.apply(this, arguments);
-        this.$el.addClass((_ref = this.options["class"]) != null ? _ref : this.options.field);
+        this.field = options.field;
+        this.view = options.view;
+        this.map = options.map;
+        this.escape = options.escape;
+        this.editable = options.editable;
+        this.label = options.label;
+        this.edit = options.edit;
+        this.save = options.save;
+        this.$el.addClass((_ref = options["class"]) != null ? _ref : options.field);
       }
 
       ListItemCell.prototype.renderableValue = function(nomap) {
         var value;
-        value = this.model.get(this.options.field);
-        if (!nomap && _.isFunction(this.options.map)) {
-          value = this.options.map.call(this.options.view.view, value, this.model);
+        value = this.model.get(this.field);
+        if (!nomap && _.isFunction(this.map)) {
+          value = this.map.call(this.view.view, value, this.model);
         }
         return value != null ? value : "";
       };
@@ -866,37 +897,35 @@
       ListItemCell.prototype.render = function() {
         var editBtnEl, label, _ref, _ref1;
         this.$el.empty();
-        if (this.options.escape === false) {
+        if (this.escape === false) {
           this.$el.html(this.renderableValue());
         } else {
           this.$el.text(this.renderableValue());
         }
-        if (this.options.editable === true) {
-          label = (_ref = this.options.label) != null ? _ref : this.options.field;
+        if (this.editable === true) {
+          label = (_ref = this.label) != null ? _ref : this.field;
           editBtnEl = $("<span/>", {
             "class": 'edit button inline',
             title: "Edit " + label,
             text: '✎'
           });
-          if ((_ref1 = this.model.get(this.options.field)) === (void 0) || _ref1 === null || _ref1 === '') {
+          if ((_ref1 = this.model.get(this.field)) === (void 0) || _ref1 === null || _ref1 === '') {
             $(editBtnEl).addClass('show');
-          } else {
-            $(editBtnEl).removeClass('show');
           }
           this.$el.append(editBtnEl);
         }
         return this;
       };
 
-      ListItemCell.prototype.edit = function(event) {
+      ListItemCell.prototype.handleEdit = function(event) {
         var editField, key, option, optionEl, value, _i, _len, _ref, _ref1;
-        if (this.options.editable === true) {
-          value = this.model.get(this.options.field);
-          if (_.isFunction(this.options.edit)) {
-            editField = this.options.edit.call(this, value, this.model);
-          } else if (_.isArray(this.options.edit)) {
+        if (this.editable === true) {
+          value = this.model.get(this.field);
+          if (_.isFunction(this.edit)) {
+            editField = this.edit.call(this, value, this.model);
+          } else if (_.isArray(this.edit)) {
             editField = $("<select/>");
-            _ref = this.options.edit;
+            _ref = this.edit;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               option = _ref[_i];
               optionEl = $("<option/>", {
@@ -906,9 +935,9 @@
               editField.append(optionEl);
               $(optionEl).prop("selected", option === value);
             }
-          } else if (_.isObject(this.options.edit)) {
+          } else if (_.isObject(this.edit)) {
             editField = $("<select/>");
-            _ref1 = this.options.edit;
+            _ref1 = this.edit;
             for (key in _ref1) {
               option = _ref1[key];
               optionEl = $("<option/>", {
@@ -930,22 +959,24 @@
             $(editField).focus();
           }
         }
+        event.preventDefault();
         return false;
       };
 
-      ListItemCell.prototype.stopPropagation = function(e) {
+      ListItemCell.prototype.stopPropagation = function(event) {
+        event.preventDefault();
         return false;
       };
 
       ListItemCell.prototype.saveEditedField = function() {
         var changeSet, e, editField, value;
         editField = this.$(".editableField");
-        if (_.isFunction(this.options.save)) {
-          return this.options.save.call(this, editField, this.model);
+        if (_.isFunction(this.save)) {
+          return this.save.call(this, editField, this.model);
         } else {
           value = editField.val();
           changeSet = $.extend(true, {}, this.model.attributes);
-          changeSet[this.options.field] = value;
+          changeSet[this.field] = value;
           if (!this.model._validate(changeSet, this.model)) {
             return;
           }
@@ -1199,25 +1230,26 @@
     return Ribs.InlineAction = (function(_super) {
       __extends(InlineAction, _super);
 
-      function InlineAction() {
-        return InlineAction.__super__.constructor.apply(this, arguments);
+      function InlineAction(options) {
+        InlineAction.__super__.constructor.apply(this, arguments);
+        this.listItem = options.listItem;
       }
 
       InlineAction.prototype.label = function() {
         var label, _ref;
         label = (_ref = this.model.get("inlineLabel")) != null ? _ref : this.model.get("label");
         if (_.isFunction(label)) {
-          label = label.call(this.model, this.options.listItem.model);
+          label = label.call(this.model, this.listItem.model);
         }
         return label;
       };
 
       InlineAction.prototype.getSelected = function() {
-        return [this.options.listItem.model];
+        return [this.listItem.model];
       };
 
       InlineAction.prototype.getListItem = function() {
-        return this.options.listItem;
+        return this.listItem;
       };
 
       return InlineAction;
@@ -1446,7 +1478,8 @@
         'click': "remove"
       };
 
-      KeyboardHelpView.prototype.initialize = function() {
+      KeyboardHelpView.prototype.initialize = function(options) {
+        this.views = options.views;
         return $(window).on("keyup", this.handleKeyup);
       };
 
@@ -1463,20 +1496,20 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, bindings, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
+        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _ref2, _results;
         this.$el.empty();
-        _ref = this.options.views;
+        _ref = this.views;
         _results = [];
         for (namespace in _ref) {
           view = _ref[namespace];
-          bindings = view.bindings;
-          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden" || Object.keys(bindings).length === 0)) {
+          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden")) {
             h1 = $("<h1/>", {
               text: view.label
             });
             ul = $("<ul/>");
-            for (_i = 0, _len = bindings.length; _i < _len; _i++) {
-              binding = bindings[_i];
+            _ref2 = view.bindings;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              binding = _ref2[_i];
               li = $("<li/>", {
                 "class": "hotkey"
               });

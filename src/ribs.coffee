@@ -91,6 +91,11 @@ do ($=jQuery) ->
                 @$el.append @[l]
             
             @setCollection @collection if @collection?
+        
+        delegateEvents: ->
+            super
+            for sv in ["list", "actions"] when @subviews(sv)?
+                view.delegateEvents() for view in @subviews(sv)
 
         render: ->
             @_render @renderOrder
@@ -397,7 +402,7 @@ do ($=jQuery) ->
             for view in @subviews("action")
                 view.render() 
                 view.delegateEvents()
-        
+
         initializeList: ->
             $list = $ "<ul/>", class: "list"
             $list
@@ -586,7 +591,7 @@ do ($=jQuery) ->
         className: "cell"
     
         _ribsEvents:
-            'click .edit' : 'edit'
+            'click .edit' : 'handleEdit'
             'click .editableField' : 'stopPropagation'
             'keypress .editableField' : 'handleKeypress'
             'blur .editableField' : 'saveEditedField'
@@ -596,62 +601,71 @@ do ($=jQuery) ->
             @events ||= {}
             _.extend @events, @_ribsEvents
             super
-            @$el.addClass(@options.class ? @options.field)
+
+            @field = options.field
+            @view = options.view
+            @map = options.map
+            @escape = options.escape
+            @editable = options.editable
+            @label = options.label
+            @edit = options.edit
+            @save = options.save
+
+
+            @$el.addClass(options.class ? options.field)
 
         renderableValue: (nomap) ->
              
-            value = @model.get @options.field
+            value = @model.get @field
 
-            if !nomap and _.isFunction @options.map
-                value = @options.map.call @options.view.view, value, @model
+            if !nomap and _.isFunction @map
+                value = @map.call @view.view, value, @model
             value ? ""
 
         render: ()->
             @$el.empty()
 
             # cells are rendered as text by default unless `escape` is false
-            if @options.escape is false
+            if @escape is false
                 @$el.html @renderableValue()
             else
                 @$el.text @renderableValue()
 
-            if @options.editable is true
-                label = @options.label ? @options.field
+            if @editable is true
+                label = @label ? @field
                 editBtnEl = $ "<span/>",
                     class: 'edit button inline', 
                     title: "Edit #{label}"
                     text: '✎'
-                if @model.get(@options.field) in [undefined, null, '']
+                if @model.get(@field) in [undefined, null, '']
                     $(editBtnEl).addClass('show')
-                else
-                    $(editBtnEl).removeClass('show')
 
                 @$el.append(editBtnEl) 
 
             this
 
-        edit: (event) ->
+        handleEdit: (event) ->
 
-            if @options.editable is true
+            if @editable is true
 
-                value = @model.get @options.field
+                value = @model.get @field
 
-                if _.isFunction @options.edit
+                if _.isFunction @edit
                     # edit = function could return an html element
-                    editField = @options.edit.call this, value, @model
-                else if _.isArray @options.edit 
+                    editField = @edit.call this, value, @model
+                else if _.isArray @edit 
                     # edit = array will give a select box
                     editField = $ "<select/>"
-                    for option in @options.edit
+                    for option in @edit
                         optionEl = $ "<option/>", 
                             value: option
                             text: option
                         editField.append optionEl
                         $(optionEl).prop "selected", option is value
-                else if _.isObject @options.edit  
+                else if _.isObject @edit  
                     # edit = object will give a select box
                     editField = $ "<select/>"
-                    for key, option of @options.edit
+                    for key, option of @edit
                         optionEl = $ "<option/>", 
                             value: key
                             text: option
@@ -668,19 +682,21 @@ do ($=jQuery) ->
                     @$el.html editField
                     $(editField).focus()
 
+            event.preventDefault()
             false
 
-        stopPropagation: (e) ->
+        stopPropagation: (event) ->
+            event.preventDefault()
             false
 
         saveEditedField: ->
             editField = @$(".editableField")
-            if _.isFunction @options.save
-                @options.save.call this, editField, @model
+            if _.isFunction @save
+                @save.call this, editField, @model
             else
                 value = editField.val()
                 changeSet = $.extend true, {}, @model.attributes
-                changeSet[@options.field] = value
+                changeSet[@field] = value
 
                 unless @model._validate(changeSet, @model)
                     return
@@ -851,15 +867,19 @@ do ($=jQuery) ->
 
     class Ribs.InlineAction extends Ribs.BatchAction
 
+        constructor: (options) ->
+            super
+            @listItem = options.listItem
+
         label: ->
             label = @model.get("inlineLabel") ? @model.get("label")
             if _.isFunction label
-                label = label.call @model, @options.listItem.model
+                label = label.call @model, @listItem.model
             label
 
         getSelected: ->
-            [ @options.listItem.model ]
+            [ @listItem.model ]
 
         getListItem: ->
-            @options.listItem
+            @listItem
 
