@@ -3,4 +3,3 @@
 --ui bdd
 --compilers coffee:coffee-script
 --globals config
---ignore-leaks
