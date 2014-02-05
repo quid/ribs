@@ -176,10 +176,11 @@ do ($=jQuery) ->
             @$el.empty()
 
             for namespace, view of @options.views
-                unless $(view.context?.el).is ":hidden"
+                bindings = view.bindings
+                unless $(view.context?.el).is ":hidden" or Object.keys(bindings).length == 0
                     h1 = $ "<h1/>", text: view.label
                     ul = $ "<ul/>"
-                    for binding in view.bindings
+                    for binding in bindings
                         li = $ "<li/>", class: "hotkey"
                         li.append $ "<span/>", class: "key", text: binding.hotkey
                         li.append $ "<span/>", class: "action", text: binding.label
