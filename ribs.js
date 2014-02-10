@@ -1496,20 +1496,20 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _ref2, _results;
+        var binding, bindings, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
         this.$el.empty();
         _ref = this.views;
         _results = [];
         for (namespace in _ref) {
           view = _ref[namespace];
-          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden")) {
+          bindings = view.bindings;
+          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden" || Object.keys(bindings).length === 0)) {
             h1 = $("<h1/>", {
               text: view.label
             });
             ul = $("<ul/>");
-            _ref2 = view.bindings;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              binding = _ref2[_i];
+            for (_i = 0, _len = bindings.length; _i < _len; _i++) {
+              binding = bindings[_i];
               li = $("<li/>", {
                 "class": "hotkey"
               });
