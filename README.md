@@ -1,4 +1,4 @@
-Ribs
+Ribs [![Build Status](https://travis-ci.org/quid/ribs.png?branch=master)](https://travis-ci.org/quid/ribs)
 ====
 
 Ribs can be used to make beautiful things, like functional list widgets and, 
