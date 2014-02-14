@@ -179,7 +179,9 @@ do ($=jQuery) ->
 
             for namespace, view of @views
                 bindings = view.bindings
-                unless $(view.context?.el).is ":hidden" or Object.keys(bindings).length == 0
+                isHidden = $(view.context?.el).is ":hidden"
+                hasNoKeys = Object.keys(bindings).length is 0
+                unless isHidden or hasNoKeys
                     h1 = $ "<h1/>", text: view.label
                     ul = $ "<ul/>"
                     for binding in bindings
