@@ -1496,14 +1496,16 @@
       };
 
       KeyboardHelpView.prototype.render = function() {
-        var binding, bindings, h1, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
+        var binding, bindings, h1, hasNoKeys, isHidden, li, namespace, ul, view, _i, _len, _ref, _ref1, _results;
         this.$el.empty();
         _ref = this.views;
         _results = [];
         for (namespace in _ref) {
           view = _ref[namespace];
           bindings = view.bindings;
-          if (!$((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden" || Object.keys(bindings).length === 0)) {
+          isHidden = $((_ref1 = view.context) != null ? _ref1.el : void 0).is(":hidden");
+          hasNoKeys = Object.keys(bindings).length === 0;
+          if (!(isHidden || hasNoKeys)) {
             h1 = $("<h1/>", {
               text: view.label
             });
