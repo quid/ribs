@@ -5,4 +5,4 @@ else
 
 Ribs = root.Ribs = {}
 
-Ribs.VERSION = "0.1.2"
+Ribs.VERSION = "0.1.3"

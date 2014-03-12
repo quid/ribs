@@ -12,7 +12,7 @@
 
   Ribs = root.Ribs = {};
 
-  Ribs.VERSION = "0.1.2";
+  Ribs.VERSION = "0.1.3";
 
   (function($) {
     var _keyboardManager;
