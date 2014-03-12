@@ -1,26 +1,17 @@
 do ($=jQuery) ->
 
-    # Make `Ribs` globally accessible.
-    root = window ? module.exports
-    Ribs = root.Ribs ?= {}
-
     # Keyboard manager access point
     _keyboardManager = null
     Ribs.getKeyboardManager = ->
         _keyboardManager ?= new Ribs.KeyboardManager()
 
     class Ribs.KeyboardManager
-    
+
         # Internal char code tree for registered hot keys.
         boundCharCodes: {}
 
         # A registry for all views is required when showing hotkey help pane.
-        registeredViews:
-            global:
-                bindings: []
-                tree: {}
-                label: "Global"
-                context: window
+        registeredViews: {}
 
         options:
 
@@ -36,13 +27,22 @@ do ($=jQuery) ->
 
             @options = _.extend @options, options
 
+            if typeof window isnt 'undefined'
+
+                @registeredViews.global =
+                    bindings: []
+                    tree: {}
+                    label: "Global"
+                    context: window
+
+                $(window).on "keypress", @handleKeypress
+
             @registerHotKey
                 hotkey: "?"
                 callback: @showKeyboardBindings
                 context: this
                 label: "Show hotkeys"
 
-            $(window).on "keypress", @handleKeypress
 
         registerView: (view, label) ->
             namespace = _.uniqueId "view"
@@ -138,8 +138,6 @@ do ($=jQuery) ->
                     unless binding.precondition and not binding.precondition.call ctx
                         binding.callback.call ctx
 
-
-
         # Function which will construct/display applicable keyboard shortcuts 
         # in an overlay.
         showKeyboardBindings: ->
@@ -151,44 +149,3 @@ do ($=jQuery) ->
             view.render()
 
             $("body").append view.el
-            
-                
-
-    class Ribs.KeyboardHelpView extends Backbone.View
-
-        className: "ribs-keyboard-shortcuts-overlay"
-
-        events: 
-            'click' : "remove"
-
-        initialize: (options) ->
-            @views = options.views
-            $(window).on "keyup", @handleKeyup
-
-        remove: ->
-            $(window).off "keyup", @handleKeyup
-            super
-
-        handleKeyup: (event) =>
-            # __<return>__ or __<esc>__ will remove overlay.
-            @remove() if event.which is 27
-            false
-
-        render: ->
-            @$el.empty()
-
-            for namespace, view of @views
-                bindings = view.bindings
-                isHidden = $(view.context?.el).is ":hidden"
-                hasNoKeys = Object.keys(bindings).length is 0
-                unless isHidden or hasNoKeys
-                    h1 = $ "<h1/>", text: view.label
-                    ul = $ "<ul/>"
-                    for binding in bindings
-                        li = $ "<li/>", class: "hotkey"
-                        li.append $ "<span/>", class: "key", text: binding.hotkey
-                        li.append $ "<span/>", class: "action", text: binding.label
-                        ul.append li
-                    @$el.append h1, ul
-
-
