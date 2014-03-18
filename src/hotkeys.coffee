@@ -104,8 +104,8 @@ do ($=jQuery) ->
             return unless @options.enableKeyboardShortcuts
 
             # don't do anything if the user is interacting with a text input field
-            # (return if $el is not radio, is not checkbox, is not a button, but it is still an input element)
-            return if $(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input")
+            # (return if $el is not radio, is not checkbox, is not a button, but it is still an input or editable element)
+            return if $(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input,[contenteditable]")
 
             context = @currentContext ? @registeredViews[namespace].tree
 
