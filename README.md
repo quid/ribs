@@ -9,12 +9,6 @@ The meat and bones of Ribs is the `Ribs.List` - an extention to Backbone view
 which renders models from a collection and allows an intuitive way to define 
 actions to run against selected models. 
 
-Annotated Source
-----------------
-
-- [ribs.coffee](http://quid.github.com/ribs/docs/ribs.html).
-- [hotkeys.coffee](http://quid.github.com/ribs/docs/hotkeys.html).
-
 Example application
 -------------------
 
@@ -22,6 +16,11 @@ A good way to learn how to use Ribs is to look at the
 [annotated source of our demo application](http://quid.github.com/ribs/docs/todos.html).
 
 You can see the application in action [here](http://quid.github.com/ribs/demo).
+
+Annotated Source
+----------------
+
++ [list.coffee](http://quid.github.com/ribs/docs/list.html)
 
 Dependencies
 ------------

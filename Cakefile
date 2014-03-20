@@ -6,16 +6,34 @@ UglifyJS = require 'uglify-js'
 
 srcDir = path.resolve 'src'
 
-appFiles  = [
-    path.resolve 'src/ribs.coffee'
-    path.resolve 'src/hotkeys.coffee'
-    path.resolve 'src/ribs.styl'
-]
+getSrcDir = (dirname) ->
+    files = fs.readdirSync "src/#{dirname}"
+    files = files.map (s) ->
+        path.resolve "src/#{dirname}/#{s}"
+    files
+
+
+styleFiles = ->
+    [
+        path.resolve 'src/ribs.styl'
+    ]
+
+scriptFiles = ->
+    viewFiles = getSrcDir 'views'
+    modelFiles = getSrcDir 'models'
+    [
+        path.resolve 'src/ribs.coffee'
+        path.resolve 'src/hotkeys.coffee'
+    ].concat modelFiles.concat viewFiles
+
+allFiles = ->
+    scriptFiles().concat styleFiles()
 
 joinFiles = (files...) ->
     code = ""
     for filename in files
-        src = (fs.readFileSync "src/#{filename}").toString()
+        console.log "Compiling #{filename}"
+        src = (fs.readFileSync filename).toString()
         code += src
     code
 
@@ -24,7 +42,7 @@ task 'watch', 'Watch for changes in source files and rebuild', ->
 
     invoke 'build'
 
-    for file in appFiles then do (file) ->
+    for file in allFiles() then do (file) ->
         fs.watchFile file, { interval: 250 }, -> # Look for a change every 250ms
             console.log "Change in #{file}"
             invoke 'build'
@@ -32,7 +50,7 @@ task 'watch', 'Watch for changes in source files and rebuild', ->
 task 'build', 'Compile Ribs', (options) ->
     console.log "Building..."
 
-    jsCode = joinFiles 'ribs.coffee', 'hotkeys.coffee'
+    jsCode = joinFiles scriptFiles()...
 
     # compile coffeescript
     jsCode = coffee.compile jsCode
@@ -47,7 +65,7 @@ task 'build', 'Compile Ribs', (options) ->
         console.log "Wrote ribs.min.js"
 
     # compile stylus to css
-    styleCode = joinFiles 'ribs.styl'
+    styleCode = joinFiles styleFiles()...
     stylus.render styleCode, filename: 'ribs.css', (err, css) ->
         throw err if err
         fs.writeFile 'ribs.css', css, (err) ->

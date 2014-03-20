@@ -1,36 +1,28 @@
-requirejs = require "requirejs"
+path = require "path"
 
-rootDir = "#{__dirname}/../"
+rootDir = path.resolve "#{__dirname}/../"
+
+global.jQuery = require "jquery"
+global._ = require "underscore"
+global.Backbone = require "backbone"
+global.Backbone.$ = jQuery
+global.Ribs = require("ribs").Ribs
 
 describe 'Ribs Tests', ->
+
     before (done) ->
-        console.log "#before"
-        # load libraries synchronously so tests don't start until they're loaded
-        requirejs ['jquery', 'backbone'], (jquery, backbone) ->
-            # expose jQuery to ribs.js
-            global.jQuery = jquery
-            # inject jquery into backbone.js
-            backbone.$ = jquery
             
-            # load Ribs, exposed as window.Ribs
-            require rootDir + "ribs.js"
-            Ribs = window.Ribs
-            
-            list = new Ribs.List
-                model: Backbone.Model
-                collection: new Backbone.Collection
-                displayAttributes: [
-                    field: "value"
-                ]
-            
-            # expose list to tests
-            module.exports.list = list
-            # tell tests initialization is done
-            done()
+        @list = new Ribs.List
+            model: Backbone.Model
+            collection: new Backbone.Collection
+            displayAttributes: [
+                field: "value"
+            ]
+        done()
 
     describe '#sortCollection()', ->
         it 'should sort collection in ascending and descending order', ->
-            list = module.exports.list
+            list = @list
             sortField = list.displayAttributes[0]["field"]
             #console.log "sortField [" + sortField + "]"
             
