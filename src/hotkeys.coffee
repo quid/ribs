@@ -107,6 +107,7 @@ do ($=jQuery) ->
             # (return if $el is not radio, is not checkbox, is not a button, but it is still an input or editable element)
             return if $(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input,[contenteditable]")
 
+
             context = @currentContext ? @registeredViews[namespace].tree
 
             @walkContext context, event.which if context?
