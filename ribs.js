@@ -154,7 +154,7 @@
         if (!this.options.enableKeyboardShortcuts) {
           return;
         }
-        if ($(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input")) {
+        if ($(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input,[contenteditable]")) {
           return;
         }
         context = (_ref = this.currentContext) != null ? _ref : this.registeredViews[namespace].tree;
@@ -1338,11 +1338,7 @@
         if (options == null) {
           options = {};
         }
-<<<<<<< HEAD
-        if ($(document.activeElement).not(":radio").not(":checkbox").not(":button").is(":input,[contenteditable]")) {
-=======
         if (this.view.suppressToggle) {
->>>>>>> Refactoring Ribs into multiple files. Removing requirejs as it wasn't working so well in the tests.
           return;
         }
         this.$el.addClass("selected");
