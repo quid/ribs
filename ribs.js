@@ -770,14 +770,19 @@
             silent: true
           });
           this.selectedByDefault = false;
-          return (_ref = this.collection) != null ? _ref.trigger("deselected") : void 0;
+          if ((_ref = this.collection) != null) {
+            _ref.trigger("deselected");
+          }
         } else {
           this.$list.find(".item:not(.selected)").trigger("selectitem", {
             silent: true
           });
           this.selectedByDefault = true;
-          return (_ref1 = this.collection) != null ? _ref1.trigger("selected") : void 0;
+          if ((_ref1 = this.collection) != null) {
+            _ref1.trigger("selected");
+          }
         }
+        return delete this.lastSelected;
       };
 
       List.prototype.invertSelected = function() {
@@ -1320,14 +1325,30 @@
         return this;
       };
 
-      ListItem.prototype.toggle = function() {
+      ListItem.prototype.toggle = function(e) {
         if (!this.$el.is(".disabled")) {
           if (this.$el.is(".selected")) {
-            return this.deselect();
+            this.deselect();
+            return delete this.view.lastSelected;
           } else {
-            return this.select();
+            this.select();
+            this.multiSelect(e);
+            return this.view.lastSelected = this.$el;
           }
         }
+      };
+
+      ListItem.prototype.multiSelect = function(e) {
+        var elements;
+        if (!(e.shiftKey && this.view.lastSelected)) {
+          return;
+        }
+        if (this.$el.prevAll().filter(this.view.lastSelected).length) {
+          elements = this.$el.prevUntil(this.view.lastSelected);
+        } else {
+          elements = this.$el.nextUntil(this.view.lastSelected);
+        }
+        return elements.find('input:checkbox:not(:checked)').click();
       };
 
       ListItem.prototype.stopPropogation = function(e) {

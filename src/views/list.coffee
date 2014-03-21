@@ -152,6 +152,7 @@ do ($=jQuery) ->
                 @$list.find(".item:not(.selected)").trigger "selectitem", silent: true
                 @selectedByDefault = true
                 @collection?.trigger "selected"
+            @lastSelected = null
 
         invertSelected : ->
             toSelect = @$list.find(":not(.item.selected)")

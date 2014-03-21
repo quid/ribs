@@ -5,7 +5,9 @@
         // Firstly, build a Backbone collection with some bootstrap data.
         var todos = new Backbone.Collection([ 
             { name: "Go to the gym", completed: false },
-            { name: "Send a post card to Elaine", completed: false }
+            { name: "Send a post card to Elaine", completed: false },
+            { name: "Go watch Jerry's show", completed: false },
+            { name: "Meet Kramer at Tom's Restaurant", completed: false }
         ]);
 
         // Next we build a Ribs list for the todos.
