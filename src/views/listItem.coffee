@@ -81,12 +81,27 @@ do ($=jQuery) ->
             
             this
 
-        toggle: ->
+        toggle: (e) ->
             unless @$el.is(".disabled")
                 if @$el.is(".selected")
                     @deselect()
+                    @view.lastSelected = null
                 else
                     @select()
+                    @multiSelect(e)
+                    @view.lastSelected = @$el
+
+        multiSelect: (e) ->
+            return unless e.shiftKey and @view.lastSelected
+
+            # Find in which direction the previous selected element is located
+            if @$el.prevAll().filter(@view.lastSelected).length
+                elements = @$el.prevUntil(@view.lastSelected)
+            else
+                elements = @$el.nextUntil(@view.lastSelected)
+
+            # Check each one of the elements
+            elements.find('input:checkbox:not(:checked)').click()
 
         stopPropogation: (e) ->
             e.stopImmediatePropagation()
