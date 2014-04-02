@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Changelog.md</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Changelog.html">
+                Changelog.md
+              </a>
+            
+              
+              <a class="source" href="README.html">
+                README.md
+              </a>
+            
+              
+              <a class="source" href="todos.html">
+                todos.js
+              </a>
+            
+              
+              <a class="source" href="hotkeys.html">
+                hotkeys.coffee
+              </a>
+            
+              
+              <a class="source" href="action.js.html">
+                action.js.coffee
+              </a>
+            
+              
+              <a class="source" href="ribs.html">
+                ribs.coffee
+              </a>
+            
+              
+              <a class="source" href="batchAction.js.html">
+                batchAction.js.coffee
+              </a>
+            
+              
+              <a class="source" href="inlineAction.js.html">
+                inlineAction.js.coffee
+              </a>
+            
+              
+              <a class="source" href="keyboardHelp.html">
+                keyboardHelp.coffee
+              </a>
+            
+              
+              <a class="source" href="list.html">
+                list.coffee
+              </a>
+            
+              
+              <a class="source" href="listItem.html">
+                listItem.coffee
+              </a>
+            
+              
+              <a class="source" href="listItemCell.html">
+                listItemCell.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Changelog.md</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>0.1.3 - Mar 11, 2014</p>
+<ul>
+<li>Broke out ribs.coffee into 6 different files</li>
+</ul>
+<p>0.1.2 - Mar 14, 2013</p>
+<ul>
+<li>Batch actions can now be collapsed into dropdown</li>
+<li>Styles now provided as Stylus code instead of pure CSS</li>
+<li>Keyboard manager is separated at a source code level (hotkeys.coffee).</li>
+</ul>
+<p>0.1.1 - Jan 30, 2013</p>
+<ul>
+<li>A <code>displayAttributes</code> property <code>editable</code> now must be boolean.
+Use an <code>edit</code> property to change the default widget.</li>
+<li>Display attributes now have <code>save</code> property which can define a function to
+override the default <code>Backbone.Model</code> <code>save</code> which gets called.</li>
+<li>Display attributes are now escaped by default. Set <code>escape: false</code> to turn off.</li>
+</ul>
+<p>0.1.0 - Jan 21, 2013</p>
+<ul>
+<li>Updated Backbone to version 0.9.10.</li>
+<li>Using <code>$.fn.prop</code> instead of <code>$.fn.attr</code> when appropriate.</li>
+<li>Any <code>updateHeader</code>, <code>updateFooter</code>, etc. method is now <code>renderHeader</code>.
+The main <code>render</code> method will call respective sub-render methods while looping
+over the <code>renderOrder</code> property.</li>
+<li>Refactored <code>Action</code> into becoming instances of <code>Backbone.Model</code>.</li>
+<li>Introduced <code>Ribs.BatchAction</code> and <code>Ribs.InlineAction</code>, which are views.</li>
+<li>Bug fixes.</li>
+</ul>
+
+            </div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

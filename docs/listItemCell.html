@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>listItemCell.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Changelog.html">
+                Changelog.md
+              </a>
+            
+              
+              <a class="source" href="README.html">
+                README.md
+              </a>
+            
+              
+              <a class="source" href="todos.html">
+                todos.js
+              </a>
+            
+              
+              <a class="source" href="hotkeys.html">
+                hotkeys.coffee
+              </a>
+            
+              
+              <a class="source" href="action.js.html">
+                action.js.coffee
+              </a>
+            
+              
+              <a class="source" href="ribs.html">
+                ribs.coffee
+              </a>
+            
+              
+              <a class="source" href="batchAction.js.html">
+                batchAction.js.coffee
+              </a>
+            
+              
+              <a class="source" href="inlineAction.js.html">
+                inlineAction.js.coffee
+              </a>
+            
+              
+              <a class="source" href="keyboardHelp.html">
+                keyboardHelp.coffee
+              </a>
+            
+              
+              <a class="source" href="list.html">
+                list.coffee
+              </a>
+            
+              
+              <a class="source" href="listItem.html">
+                listItem.coffee
+              </a>
+            
+              
+              <a class="source" href="listItemCell.html">
+                listItemCell.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>listItemCell.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>class Ribs.ListItemCell extends Backbone.View
+
+    tagName : "div"
+
+    className: "cell"
+
+    _ribsEvents:
+        'click .edit' : 'handleEdit'
+        'click .editableField' : 'stopPropagation'
+        'keypress .editableField' : 'handleKeypress'
+        'blur .editableField' : 'saveEditedField'
+
+    constructor : (options) -&gt;
+
+        @events ||= {}
+        _.extend @events, @_ribsEvents
+        super
+
+        @field = options.field
+        @view = options.view
+        @map = options.map
+        @escape = options.escape
+        @editable = options.editable
+        @label = options.label
+        @edit = options.edit
+        @save = options.save
+
+
+        @$el.addClass(options.class ? options.field)
+
+    renderableValue: (nomap) -&gt;
+         
+        value = @model.get @field
+
+        if !nomap and _.isFunction @map
+            value = @map.call @view.view, value, @model
+        value ? ""
+
+    render: ()-&gt;
+        @$el.empty()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>cells are rendered as text by default unless <code>escape</code> is false</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        if @escape is false
+            @$el.html @renderableValue()
+        else
+            @$el.text @renderableValue()
+
+        if @editable is true
+            label = @label ? @field
+            editBtnEl = $ "&lt;span/&gt;",
+                class: 'edit button inline', 
+                title: "Edit #{label}"
+                text: '✎'
+            if @model.get(@field) in [undefined, null, '']
+                $(editBtnEl).addClass('show')
+
+            @$el.append(editBtnEl) 
+
+        this
+
+    handleEdit: (event) -&gt;
+
+        if @editable is true
+
+            value = @model.get @field
+
+            if _.isFunction @edit</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>edit = function could return an html element</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                editField = <span class="hljs-property">@edit</span>.call <span class="hljs-keyword">this</span>, value, <span class="hljs-property">@model</span>
+            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> _.isArray <span class="hljs-property">@edit</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>edit = array will give a select box</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                editField = $ <span class="hljs-string">"&lt;select/&gt;"</span>
+                <span class="hljs-keyword">for</span> option <span class="hljs-keyword">in</span> <span class="hljs-property">@edit</span>
+                    optionEl = $ <span class="hljs-string">"&lt;option/&gt;"</span>, 
+                        <span class="hljs-attribute">value</span>: option
+                        <span class="hljs-attribute">text</span>: option
+                    editField.append optionEl
+                    $(optionEl).prop <span class="hljs-string">"selected"</span>, option <span class="hljs-keyword">is</span> value
+            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> _.isObject <span class="hljs-property">@edit</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>edit = object will give a select box</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                editField = $ <span class="hljs-string">"&lt;select/&gt;"</span>
+                <span class="hljs-keyword">for</span> key, option <span class="hljs-keyword">of</span> <span class="hljs-property">@edit</span>
+                    optionEl = $ <span class="hljs-string">"&lt;option/&gt;"</span>, 
+                        <span class="hljs-attribute">value</span>: key
+                        <span class="hljs-attribute">text</span>: option
+                    $(optionEl).prop <span class="hljs-string">"selected"</span>, key <span class="hljs-keyword">is</span> value
+                    editField.append optionEl
+            <span class="hljs-keyword">else</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>no edit property will default to a text box</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                editField = $ <span class="hljs-string">"&lt;input/&gt;"</span>, 
+                    <span class="hljs-attribute">type</span>: <span class="hljs-string">'text'</span>
+                    <span class="hljs-attribute">value</span>: value 
+
+            <span class="hljs-keyword">if</span> _.isElement(editField) <span class="hljs-keyword">or</span> editField <span class="hljs-keyword">instanceof</span> jQuery
+                $(editField).addClass <span class="hljs-string">"editableField"</span>
+                <span class="hljs-property">@$el</span>.html editField
+                $(editField).focus()
+
+        event.preventDefault()
+        <span class="hljs-literal">false</span>
+
+    <span class="hljs-attribute">stopPropagation</span>: <span class="hljs-function"><span class="hljs-params">(event)</span> -&gt;</span>
+        event.preventDefault()
+        <span class="hljs-literal">false</span>
+
+    <span class="hljs-attribute">saveEditedField</span>:<span class="hljs-function"> -&gt;</span>
+        editField = <span class="hljs-property">@$</span>(<span class="hljs-string">".editableField"</span>)
+        <span class="hljs-keyword">if</span> _.isFunction <span class="hljs-property">@save</span>
+            <span class="hljs-property">@save</span>.call <span class="hljs-keyword">this</span>, editField, <span class="hljs-property">@model</span>
+        <span class="hljs-keyword">else</span>
+            value = editField.val()
+            changeSet = $.extend <span class="hljs-literal">true</span>, {}, <span class="hljs-property">@model</span>.attributes
+            changeSet[<span class="hljs-property">@field</span>] = value
+
+            <span class="hljs-keyword">unless</span> <span class="hljs-property">@model</span>._validate(changeSet, <span class="hljs-property">@model</span>)
+                <span class="hljs-keyword">return</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>do whatever it takes to re-render</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">try</span>
+                <span class="hljs-property">@model</span>.save changeSet, 
+                    <span class="hljs-attribute">success</span>:<span class="hljs-function"> =&gt;</span> <span class="hljs-property">@render</span>()
+                    <span class="hljs-attribute">error</span>:<span class="hljs-function"> =&gt;</span> <span class="hljs-property">@render</span>()
+            <span class="hljs-keyword">catch</span> e
+                <span class="hljs-property">@render</span>()
+    
+    <span class="hljs-attribute">handleKeypress</span>: <span class="hljs-function"><span class="hljs-params">(e)</span>-&gt;</span>
+        <span class="hljs-keyword">if</span> e.which <span class="hljs-keyword">is</span> <span class="hljs-number">13</span>
+            <span class="hljs-property">@saveEditedField</span>()
+            <span class="hljs-literal">false</span></pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

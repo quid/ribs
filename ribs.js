@@ -782,7 +782,7 @@
             _ref1.trigger("selected");
           }
         }
-        return delete this.lastSelected;
+        return this.lastSelected = null;
       };
 
       List.prototype.invertSelected = function() {
@@ -1329,7 +1329,7 @@
         if (!this.$el.is(".disabled")) {
           if (this.$el.is(".selected")) {
             this.deselect();
-            return delete this.view.lastSelected;
+            return this.view.lastSelected = null;
           } else {
             this.select();
             this.multiSelect(e);
