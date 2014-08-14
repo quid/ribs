@@ -28,7 +28,7 @@ class Ribs.KeyboardHelpView extends Backbone.View
             unless isHidden or hasNoKeys
                 h1 = $ "<h1/>", text: view.label
                 ul = $ "<ul/>"
-                for binding in bindings
+                for binding in bindings when binding.label?
                     li = $ "<li/>", class: "hotkey"
                     li.append $ "<span/>", class: "key", text: binding.hotkey
                     li.append $ "<span/>", class: "action", text: binding.label
